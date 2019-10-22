@@ -10,9 +10,9 @@ Author: Bram van Dartel (https://github.com/xirixiz/)
 
 >>> from Afvaldienst import Afvaldienst
 >>> provider = 'mijnafvalwijzer'
->>> zipcode = '1111AA'
->>> housenumber = '11'
->>> suffix = 'A'
+>>> zipcode = '3825AL'
+>>> housenumber = '41'
+>>> suffix = ''
 >>> trash = Afval(provider, zipcode, housenumber, suffix)
 
 >>> trash.trash_raw_json

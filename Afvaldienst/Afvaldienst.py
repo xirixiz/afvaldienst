@@ -29,7 +29,6 @@ Author: Bram van Dartel (https://github.com/xirixiz/)
 import re
 import requests
 import json
-import datetime
 from datetime import date, datetime, timedelta
 
 class Afvaldienst(object):

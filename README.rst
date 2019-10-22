@@ -1,114 +1,51 @@
-Afvalwijzer library
+Afvaldienst library
 ===================
 
-|PyPi Status| |Build Status| |Coverage Status| |Wheel Status| |Python versions|
+This library is meant to interface with mijnafvalwijzer.nl and/or afvalstoffendienstkalender.nl
+It is meant to use with home automation projects like Home Assistant.
 
-This library is meant to interface with `mijnafvalwijzer <http://www.mijnafvalwijzer.nl/>`__.
-
-It is meant as a *workaround* for the afvalwijzer app (used in the Netherlands) to be notified when to place the bin at the road.
-Since this app delivers a poor functionality for notifications, and I needed a small project, I created this.
 
 Installation
 ------------
 
 .. code:: bash
 
-    pip install afvalwijzer
+    pip install afvaldienst
+
 
 Uninstallation
 --------------
 
 .. code:: bash
 
-    pip uninstall afvalwijzer
+    pip uninstall afvaldienst
+
 
 Usage
 -----
 
 .. code:: python
 
-    >>> from Afvalwijzer import Afvalwijzer
-    >>> zipcode = '3564KV'
-    >>> number = '13'
-    >>> garbage = Afvalwijzer(zipcode, number)
+    >>> from Afvaldienst import Afvaldienst
+    >>> provider = 'mijnafvalwijzer'
+    >>> zipcode = '1111AA'
+    >>> housenumber = '11'
+    >>> suffix = 'A'
+    >>> trash = Afval(provider, zipcode, housenumber, suffix)
 
-    >>> garbage.pickupdate
-    'Vandaag'
+    >>> trash.trash_raw_json
+    [{'nameType': 'gft', 'type': 'gft', 'date': '2019-12-20'}, {'nameType': 'pmd', 'type': 'pmd', 'date': '2019-12-28'}]
 
-    >>> garbage.wastetype
-    'Groente-, Fruit- en Tuinafval'
+    >>> trash.trash_next_json
+    [{'nameType': 'gft', 'type': 'gft', 'date': '2019-12-20'}
 
-    >>> garbage.garbage
-    ('Vandaag', 'Groente-, Fruit- en Tuinafval')
+    >>> trash.trash_type_list
+    ['gft', 'kerstbomen', 'pmd', 'restafval', 'papier']
 
-    >>> garbage.pickupdates
-    ['dinsdag 02 januari', 'dinsdag 02 januari']
-
-    >>> garbage.wastetypes
-    ['Groente-, Fruit- en Tuinafval', 'Kerstbomen']
-
-The following function only returns true if the pickup date is the same as today.
-
-.. code:: python
-
-    >>> garbage.notify
-    True
-
-Below is shown how I use it to get notified using pushbullet.
-
-.. code:: python
-
-    from Afvalwijzer import Afvalwijzer
-    from pushbullet import Pushbullet
-
-
-    def notification(device=None):
-        pb = Pushbullet(pushbulletapi)
-        try:
-            mydevice = pb.get_device(device)
-        except:
-            mydevice = None
-        push = pb.push_note(
-            "Container: {}".format(wastetype),
-            "Container: {}\nDate: {}".format(wastetype, pickupdate),
-            device=mydevice)
-
-
-    zipcode = '3564KV'
-    number = 13
-    pushbulletapi = 'pushbullet_api_key'
-    pushbulletdevice = 'LGE Nexus 5X'
-
-    garbage = Afvalwijzer(zipcode, number)
-    pickupdate, wastetype = garbage.garbage
-    notify = garbage.notify
-    if notify and pushbulletapi:
-        notification(pushbulletdevice)
-
-Cron job
---------
-This script can now be set up as a cronjob on your server or alike.
-
-.. code:: bash
-
-    0 6 * * * cd /path/to/script/notify_garbage.py > /dev/null 2>&1
-
-Caveat
-------
-* Output is provided in Dutch due to the main website. There is a button for English, but I haven't got it working (yet).
 
 Contributors are most welcome
 -----------------------------
-* I'm still learning how to work with it all. Therefore feedback, advice, pull request etc. are most welcome.
+* I'm still learning how to code properly. But a special thanks to Bart Dorlandt (https://github.com/bambam82/afvalwijzer) as I used his repository as base for this library.
 
-.. |Wheel Status| image:: https://img.shields.io/pypi/wheel/afvalwijzer.svg
-   :target: https://pypi.python.org/pypi/afvalwijzer
-.. |Python versions| image:: https://img.shields.io/pypi/pyversions/afvalwijzer.svg
-   :target: https://pypi.python.org/pypi/afvalwijzer
-.. |PyPi Status| image:: https://img.shields.io/pypi/v/afvalwijzer.svg
-   :target: https://pypi.python.org/pypi/afvalwijzer
-.. |Build Status| image:: https://travis-ci.org/bambam82/afvalwijzer.svg?branch=master
-   :target: https://travis-ci.org/bambam82/afvalwijzer
-.. |Coverage Status| image:: https://coveralls.io/repos/github/bambam82/afvalwijzer/badge.svg?branch=master
-   :target: https://coveralls.io/github/bambam82/afvalwijzer?branch=master
+
 

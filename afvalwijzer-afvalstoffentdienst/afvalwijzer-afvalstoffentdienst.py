@@ -1,21 +1,90 @@
 # -*- coding: utf-8 -*-
-
-"""
-This library is meant to interface with mijnafvalwijzer.nl and/or afvalstoffendienstkalender.nl
-It is meant to use with home automation projects like Home Assistant.
-
-Author: Bram van Dartel (https://github.com/xirixiz/)
-
-## Usage - see README.rst
-
-"""
+"""Asynchronous Python client for the Afvalwijzer and Afvalstoffendienst API."""
+import asyncio
+import json
+import socket
+from datetime import date, datetime, timedelta
+from typing import Dict, Optional
 
 import re
 import requests
-import json
-from datetime import date, datetime, timedelta
+
+
+import aiohttp
+import async_timeout
+from yarl import URL
+
+from .__version__ import __version__
+from .exceptions import (
+    AfvaldienstAddressError,
+    AfvaldienstConnectionError,
+    AfvaldienstError,
+)
+
 
 class Afvaldienst(object):
+
+    async def _request(self, uri: str, method: str = "POST", data=None):
+        """Handle a request to Twente Milieu."""
+
+        self.provider = provider
+        self.housenumber = housenumber
+        self.suffix = suffix
+        _zipcode = re.match('^\d{4}[a-zA-Z]{2}', zipcode)
+        if _zipcode:
+            self.zipcode = _zipcode.group()
+        else:
+            raise ValueError("Zipcode has a incorrect format. Example: 3564KV")
+
+        _providers = ('mijnafvalwijzer', 'afvalstoffendienstkalender')
+        if self.provider not in _providers:
+            raise ValueError("Invalid provider: {}, please verify".format(self.provider))
+
+
+
+        url = URL.build(
+            scheme="https", host=API_HOST, port=443, path=API_BASE_URI
+        ).join(URL(uri))
+
+        headers = {
+            "User-Agent": self.user_agent,
+            "Accept": "application/json, text/plain, */*",
+        }
+
+        try:
+            with async_timeout.timeout(self.request_timeout):
+                response = await self._session.request(
+                    method, url, data=data, headers=headers, ssl=True
+                )
+        except asyncio.TimeoutError as exception:
+            raise TwenteMilieuConnectionError(
+                "Timeout occurred while connecting to Twente Milieu API."
+            ) from exception
+        except (aiohttp.ClientError, socket.gaierror) as exception:
+            raise TwenteMilieuConnectionError(
+                "Error occurred while communicating with Twente Milieu."
+            ) from exception
+
+        content_type = response.headers.get("Content-Type", "")
+        if (response.status // 100) in [4, 5]:
+            contents = await response.read()
+            response.close()
+
+            if content_type == "application/json":
+                raise TwenteMilieuError(
+                    response.status, json.loads(contents.decode("utf8"))
+                )
+            raise TwenteMilieuError(
+                response.status, {"message": contents.decode("utf8")}
+            )
+
+        if "application/json" in response.headers["Content-Type"]:
+            return await response.json()
+        return await response.text()
+
+
+
+
     def __init__(self, provider, zipcode, housenumber, suffix):
         self.provider = provider
         self.housenumber = housenumber

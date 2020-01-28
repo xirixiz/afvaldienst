@@ -39,7 +39,6 @@ class Afvaldienst(object):
         self._trashTypes = self.__get_data_trash_types()
         self._trashScheduleFull, self._trashScheduleToday, self._trashScheduleTomorrow, self._trashNextPickupItem, self._trashFirstNextInDays = self.__get_trashschedule()
 
-
     def __get_data_json(self):
         jsonUrl = 'https://json.{}.nl/?method=postcodecheck&postcode={}&street=&huisnummer={}&toevoeging={}&langs=nl'.format(
             self.provider, self.zipcode, str(self.housenumber), self.suffix)
@@ -87,8 +86,8 @@ class Afvaldienst(object):
 
                 def __gen_json(name, date):
                     trash = {}
-                    trash['key'] = name
-                    trash['value'] = date
+                    trash['key'] = 'first_waste_type'
+                    trash['value'] = name
                     trashNextPickupItem.append(trash)
 
                 if item['date'] >= self.date_today:
@@ -179,3 +178,17 @@ class Afvaldienst(object):
     def trash_type_list(self):
         """Return both the pickup date and the container type."""
         return self._trashTypes
+
+trash = Afvaldienst('mijnafvalwijzer', '5146EG', '6', '')
+print("\n")
+print(trash.trash_schedulefull_json)
+print("\n")
+print(trash.trash_schedule_next_days_json)
+print("\n")
+print(trash.trash_schedule_today_json)
+print("\n")
+print(trash.trash_schedule_tomorrow_json)
+print("\n")
+print(trash.trash_schedule_next_item_json)
+print("\n")
+print(trash.trash_type_list)

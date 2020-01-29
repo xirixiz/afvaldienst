@@ -31,13 +31,14 @@ class Afvaldienst(object):
             raise ValueError("Invalid provider: {}, please verify".format(self.provider))
 
         self.date_today = datetime.today().strftime('%Y-%m-%d')
-        #self.date_today = '2019-10-25'
         today_to_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=1)
         self.date_tomorrow = datetime.strftime(today_to_tomorrow, '%Y-%m-%d')
+        day_after_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=2)
+        self.date_dat = datetime.strftime(day_after_tomorrow, '%Y-%m-%d')
 
         self._jsonData = self.__get_data_json()
         self._trashTypes = self.__get_data_trash_types()
-        self._trashScheduleFull, self._trashScheduleToday, self._trashScheduleTomorrow, self._trashNextPickupItem, self._trashFirstNextInDays = self.__get_trashschedule()
+        self._trashScheduleFull, self._trashScheduleToday, self._trashScheduleTomorrow, self._trashScheduleDAT, self._trashNextPickupItem, self._trashNextPickupDate, self._trashFirstNextInDays = self.__get_trashschedule()
 
     def __get_data_json(self):
         jsonUrl = 'https://json.{}.nl/?method=postcodecheck&postcode={}&street=&huisnummer={}&toevoeging={}&langs=nl'.format(
@@ -61,12 +62,17 @@ class Afvaldienst(object):
         trashNextDays = {}
         trashToday = {}
         trashTomorrow = {}
+        trashDAT = {}
         multiTrashToday = []
         multiTrashTomorrow = []
+        multiTrashDAT = []
         trashScheduleToday = []
         trashScheduleTomorrow = []
+        trashScheduleDAT = []
         trashScheduleFull = []
+        multiTrashNextPickupItem = []
         trashNextPickupItem = []
+        trashNextPickupDate = []
         trashFirstNextInDays = []
         trashTypesExtended = ['today', 'tomorrow', 'next']
         trashTypesExtended.extend(self._trashTypes)
@@ -85,18 +91,27 @@ class Afvaldienst(object):
                 dateConvert = datetime.strptime(item['date'], '%Y-%m-%d').strftime('%d-%m-%Y')
 
                 def __gen_json(name, date):
-                    trash = {}
-                    trash['key'] = 'first_waste_type'
-                    trash['value'] = name
-                    trashNextPickupItem.append(trash)
+                    global trash_json
+                    trash_json = {}
+                    trash_json['key'] = name
+                    trash_json['value'] = date
+                    return trash_json
 
                 if item['date'] >= self.date_today:
                     if len(trashNextPickupItem) == 0:
-                        __gen_json(item['nameType'], dateConvert)
+                        __gen_json('firs_next_item', item['nameType'])
+                        trash_json['date_checker'] = item['date']
+                        trashNextPickupItem.append(trash_json)
+                        multiTrashNextPickupItem.append(item['nameType'])
+                        print(multiTrashNextPickupItem)
                     else:
                         for element in trashNextPickupItem:
-                            if element['value'] == item['date']:
-                                __gen_json(item['nameType'], dateConvert)
+                             if element['date_checker'] == item['date']:
+                                element['value'] = ', '.join(multiTrashNextPickupItem).strip()
+
+                    if len(trashNextPickupDate) == 0:
+                        __gen_json('first_next_date', dateConvert)
+                        trashNextPickupDate.append(trash_json)
 
                 if name not in trashType:
                     if item['date'] >= self.date_today:
@@ -130,6 +145,14 @@ class Afvaldienst(object):
                         if len(multiTrashTomorrow) != 0:
                             trashTomorrow['value'] = ', '.join(multiTrashTomorrow)
 
+                    if item['date'] == self.date_dat:
+                        trashType[name] = "day_after_tomorrow"
+                        trashDAT['key'] = "day_after_tomorrow"
+                        trashScheduleDAT.append(trashDAT)
+                        multiTrashDAT.append(item['nameType'])
+                        if len(multiTrashDAT) != 0:
+                            trashDAT['value'] = ', '.join(multiTrashDAT)
+
             if len(trashScheduleToday) == 0:
                 trashType[name] = "today"
                 trashToday['key'] = "today"
@@ -142,7 +165,13 @@ class Afvaldienst(object):
                 trashTomorrow['value'] = "None"
                 trashScheduleTomorrow.append(trashTomorrow)
 
-        return trashScheduleFull, trashScheduleToday, trashScheduleTomorrow, trashNextPickupItem, trashFirstNextInDays
+            if len(trashScheduleDAT) == 0:
+                trashType[name] = "day_after_tomorrow"
+                trashDAT['key'] = "day_after_tomorrow"
+                trashDAT['value'] = "None"
+                trashScheduleDAT.append(trashDAT)
+
+        return trashScheduleFull, trashScheduleToday, trashScheduleTomorrow, trashScheduleDAT, trashNextPickupItem, trashNextPickupDate, trashFirstNextInDays
 
     @property
     def trash_raw_json(self):
@@ -170,9 +199,19 @@ class Afvaldienst(object):
         return self._trashScheduleTomorrow
 
     @property
+    def trash_schedule_dat_json(self):
+        """Return both the pickup date and the container type."""
+        return self._trashScheduleDAT
+
+    @property
     def trash_schedule_next_item_json(self):
         """Return both the pickup date and the container type."""
         return self._trashNextPickupItem
+
+    @property
+    def trash_schedule_next_date_json(self):
+        """Return both the pickup date and the container type."""
+        return self._trashNextPickupDate
 
     @property
     def trash_type_list(self):
@@ -189,6 +228,10 @@ print(trash.trash_schedule_today_json)
 print("\n")
 print(trash.trash_schedule_tomorrow_json)
 print("\n")
+print(trash.trash_schedule_dat_json)
+print("\n")
 print(trash.trash_schedule_next_item_json)
+print("\n")
+print(trash.trash_schedule_next_date_json)
 print("\n")
 print(trash.trash_type_list)

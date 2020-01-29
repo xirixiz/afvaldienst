@@ -3,6 +3,13 @@
 Release History
 
 ---------------
+0.5.0 (2019-01-29)
+++++++++++++++++
+**Bugfix release**
+- added day after tomorrow
+- added first next pickup date
+
+---------------
 0.4.0 (2019-01-28)
 ++++++++++++++++
 **Bugfix release**

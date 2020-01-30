@@ -3,6 +3,18 @@
 Release History
 
 ---------------
+0.6.1 (2019-01-30)
+++++++++++++++++
+**Bugfix release**
+- fixed typo firs should have been first
+
+---------------
+0.6.0 (2019-01-30)
+++++++++++++++++
+**Bugfix release**
+- removed obsolete lines of code
+
+---------------
 0.5.0 (2019-01-29)
 ++++++++++++++++
 **Bugfix release**

@@ -15,6 +15,8 @@ import requests
 import json
 from datetime import date, datetime, timedelta
 
+trash_json = {}
+
 class Afvaldienst(object):
     def __init__(self, provider, zipcode, housenumber, suffix):
         self.provider = provider
@@ -99,11 +101,10 @@ class Afvaldienst(object):
 
                 if item['date'] >= self.date_today:
                     if len(trashNextPickupItem) == 0:
-                        __gen_json('firs_next_item', item['nameType'])
+                        __gen_json('first_next_item', item['nameType'])
                         trash_json['date_checker'] = item['date']
                         trashNextPickupItem.append(trash_json)
                         multiTrashNextPickupItem.append(item['nameType'])
-                        print(multiTrashNextPickupItem)
                     else:
                         for element in trashNextPickupItem:
                              if element['date_checker'] == item['date']:
@@ -217,21 +218,3 @@ class Afvaldienst(object):
     def trash_type_list(self):
         """Return both the pickup date and the container type."""
         return self._trashTypes
-
-trash = Afvaldienst('mijnafvalwijzer', '5146EG', '6', '')
-print("\n")
-print(trash.trash_schedulefull_json)
-print("\n")
-print(trash.trash_schedule_next_days_json)
-print("\n")
-print(trash.trash_schedule_today_json)
-print("\n")
-print(trash.trash_schedule_tomorrow_json)
-print("\n")
-print(trash.trash_schedule_dat_json)
-print("\n")
-print(trash.trash_schedule_next_item_json)
-print("\n")
-print(trash.trash_schedule_next_date_json)
-print("\n")
-print(trash.trash_type_list)

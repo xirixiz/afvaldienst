@@ -18,10 +18,11 @@ from datetime import date, datetime, timedelta
 trash_json = {}
 
 class Afvaldienst(object):
-    def __init__(self, provider, zipcode, housenumber, suffix):
+    def __init__(self, provider, zipcode, housenumber, suffix, count_today):
         self.provider = provider
         self.housenumber = housenumber
         self.suffix = suffix
+        self.countToday = count_today
         _zipcode = re.match('^\d{4}[a-zA-Z]{2}', zipcode)
         if _zipcode:
             self.zipcode = _zipcode.group()
@@ -33,6 +34,7 @@ class Afvaldienst(object):
             raise ValueError("Invalid provider: {}, please verify".format(self.provider))
 
         self.date_today = datetime.today().strftime('%Y-%m-%d')
+        self.date_today = '2020-02-14'
         today_to_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=1)
         self.date_tomorrow = datetime.strftime(today_to_tomorrow, '%Y-%m-%d')
         day_after_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=2)
@@ -79,6 +81,11 @@ class Afvaldienst(object):
         trashTypesExtended = ['today', 'tomorrow', 'next']
         trashTypesExtended.extend(self._trashTypes)
 
+        if self.countToday == 'yes':
+            countToday = self.date_today
+        else:
+            countToday = self.date_tomorrow
+
         # Some date count functions for next
         def d(s):
             [year, month, day] = map(int, s.split('-'))
@@ -99,15 +106,15 @@ class Afvaldienst(object):
                     trash_json['value'] = date
                     return trash_json
 
-                if item['date'] >= self.date_today:
+                if item['date'] >= countToday:
                     if len(trashNextPickupItem) == 0:
                         __gen_json('first_next_item', item['nameType'])
-                        trash_json['date_checker'] = item['date']
+                        dateChecker = item['date']
                         trashNextPickupItem.append(trash_json)
                         multiTrashNextPickupItem.append(item['nameType'])
                     else:
                         for element in trashNextPickupItem:
-                             if element['date_checker'] == item['date']:
+                             if dateChecker == item['date']:
                                 element['value'] = ', '.join(multiTrashNextPickupItem).strip()
 
                     if len(trashNextPickupDate) == 0:
@@ -123,7 +130,7 @@ class Afvaldienst(object):
                         trash['days_remaining'] = (days(self.date_today, item['date']))
                         trashScheduleFull.append(trash)
 
-                    if item['date'] > self.date_today:
+                    if item['date'] >= countToday:
                         if len(trashNextDays) == 0:
                             trashType[name] = "firts_next_in_days"
                             trashNextDays['key'] = "first_next_in_days"

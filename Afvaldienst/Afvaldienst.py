@@ -34,7 +34,6 @@ class Afvaldienst(object):
             raise ValueError("Invalid provider: {}, please verify".format(self.provider))
 
         self.date_today = datetime.today().strftime('%Y-%m-%d')
-        self.date_today = '2020-02-14'
         today_to_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=1)
         self.date_tomorrow = datetime.strftime(today_to_tomorrow, '%Y-%m-%d')
         day_after_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=2)

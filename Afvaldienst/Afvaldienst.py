@@ -80,7 +80,7 @@ class Afvaldienst(object):
         trashTypesExtended = ['today', 'tomorrow', 'next']
         trashTypesExtended.extend(self._trashTypes)
 
-        if self.countToday.casefold() == 'true':
+        if self.countToday.casefold() in ('true', 'yes'):
             countToday = self.date_today
         else:
             countToday = self.date_tomorrow

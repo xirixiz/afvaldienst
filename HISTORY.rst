@@ -3,6 +3,12 @@
 Release History
 
 ---------------
+0.6.6 (2019-03-31)
+++++++++++++++++
+**Bugfix release**
+- fixed typo frist should have been first
+
+---------------
 0.6.1 (2019-01-30)
 ++++++++++++++++
 **Bugfix release**

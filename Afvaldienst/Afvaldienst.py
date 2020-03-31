@@ -131,7 +131,7 @@ class Afvaldienst(object):
 
                     if item['date'] >= countToday:
                         if len(trashNextDays) == 0:
-                            trashType[name] = "firts_next_in_days"
+                            trashType[name] = "first_next_in_days"
                             trashNextDays['key'] = "first_next_in_days"
                             trashNextDays['value'] = (days(self.date_today, item['date']))
                             trashFirstNextInDays.append(trashNextDays)

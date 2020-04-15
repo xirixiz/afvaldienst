@@ -1,6 +1,11 @@
 .. :changelog:
 
 Release History
+---------------
+0.6.7 (2019-04-15)
+++++++++++++++++
+**Bugfix release**
+- added strip whitespace for trash types
 
 ---------------
 0.6.6 (2019-03-31)

@@ -98,11 +98,11 @@ class Afvaldienst(object):
                 name = item["nameType"]
                 dateConvert = datetime.strptime(item['date'], '%Y-%m-%d').strftime('%d-%m-%Y')
 
-                def __gen_json(name, date):
+                def __gen_json(x, y):
                     global trash_json
                     trash_json = {}
-                    trash_json['key'] = name
-                    trash_json['value'] = date
+                    trash_json['key'] = x.strip()
+                    trash_json['value'] = y.strip()
                     return trash_json
 
                 if item['date'] >= countToday:
@@ -123,8 +123,8 @@ class Afvaldienst(object):
                 if name not in trashType:
                     if item['date'] >= self.date_today:
                         trash = {}
-                        trashType[name] = item["nameType"]
-                        trash['key'] = item['nameType']
+                        trashType[name] = item["nameType"].strip()
+                        trash['key'] = item['nameType'].strip()
                         trash['value'] = dateConvert
                         trash['days_remaining'] = (days(self.date_today, item['date']))
                         trashScheduleFull.append(trash)
@@ -142,7 +142,7 @@ class Afvaldienst(object):
                         trashScheduleToday.append(trashToday)
                         multiTrashToday.append(item['nameType'])
                         if len(multiTrashToday) != 0:
-                            trashToday['value'] = ', '.join(multiTrashToday)
+                            trashToday['value'] = ', '.join(multiTrashToday).strip()
 
                     if item['date'] == self.date_tomorrow:
                         trashType[name] = "tomorrow"
@@ -150,7 +150,7 @@ class Afvaldienst(object):
                         trashScheduleTomorrow.append(trashTomorrow)
                         multiTrashTomorrow.append(item['nameType'])
                         if len(multiTrashTomorrow) != 0:
-                            trashTomorrow['value'] = ', '.join(multiTrashTomorrow)
+                            trashTomorrow['value'] = ', '.join(multiTrashTomorrow).strip()
 
                     if item['date'] == self.date_dat:
                         trashType[name] = "day_after_tomorrow"
@@ -158,7 +158,7 @@ class Afvaldienst(object):
                         trashScheduleDAT.append(trashDAT)
                         multiTrashDAT.append(item['nameType'])
                         if len(multiTrashDAT) != 0:
-                            trashDAT['value'] = ', '.join(multiTrashDAT)
+                            trashDAT['value'] = ', '.join(multiTrashDAT).strip()
 
             if len(trashScheduleToday) == 0:
                 trashType[name] = "today"

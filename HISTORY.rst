@@ -2,6 +2,12 @@
 
 Release History
 ---------------
+0.6.8 (2019-04-29)
+++++++++++++++++
+**Bugfix release**
+- added strip whitespace for trash types, missed one
+
+---------------
 0.6.7 (2019-04-15)
 ++++++++++++++++
 **Bugfix release**

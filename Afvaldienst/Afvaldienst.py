@@ -54,7 +54,7 @@ class Afvaldienst(object):
     def __get_data_trash_types(self):
         trashTypes = []
         for item in self._jsonData:
-            trash = item["nameType"]
+            trash = item["nameType"].strip()
             if trash not in trashTypes:
                 trashTypes.append(trash)
 

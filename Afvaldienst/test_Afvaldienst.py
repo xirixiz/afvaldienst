@@ -2,7 +2,8 @@
 
 from Afvaldienst import Afvaldienst
 
-trash = Afvaldienst('mijnafvalwijzer', '5146EG', '6', '', 'false')
+#trash = Afvaldienst('mijnafvalwijzer', '5146EG', '6', '', 'false')
+trash = Afvaldienst('mijnafvalwijzer', '6851GJ', '2', '', 'false')
 print("\n")
 print(trash.trash_schedulefull_json)
 print("\n")

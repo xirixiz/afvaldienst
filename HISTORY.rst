@@ -2,6 +2,12 @@
 
 Release History
 ---------------
+0.6.9 (2019-06-05)
+++++++++++++++++
+**Bugfix release**
+- added data validation
+
+---------------
 0.6.8 (2019-04-29)
 ++++++++++++++++
 **Bugfix release**

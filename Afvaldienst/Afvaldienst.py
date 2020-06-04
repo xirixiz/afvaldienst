@@ -27,11 +27,11 @@ class Afvaldienst(object):
         if _zipcode:
             self.zipcode = _zipcode.group()
         else:
-            raise ValueError("Zipcode has a incorrect format. Example: 3564KV")
+            raise SystemExit("Zipcode has a incorrect format. Example: 3564KV")
 
         _providers = ('mijnafvalwijzer', 'afvalstoffendienstkalender')
         if self.provider not in _providers:
-            raise ValueError("Invalid provider: {}, please verify".format(self.provider))
+            raise SystemExit("Invalid provider: {}, please verify".format(self.provider))
 
         self.date_today = datetime.today().strftime('%Y-%m-%d')
         today_to_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=1)
@@ -44,9 +44,13 @@ class Afvaldienst(object):
         self._trashScheduleFull, self._trashScheduleToday, self._trashScheduleTomorrow, self._trashScheduleDAT, self._trashNextPickupItem, self._trashNextPickupDate, self._trashFirstNextInDays = self.__get_trashschedule()
 
     def __get_data_json(self):
-        jsonUrl = 'https://json.{}.nl/?method=postcodecheck&postcode={}&street=&huisnummer={}&toevoeging={}&langs=nl'.format(
-            self.provider, self.zipcode, str(self.housenumber), self.suffix)
-        jsonResponse = requests.get(jsonUrl).json()
+        jsonUrl = 'https://json.{}.nl/?method=postcodecheck&postcode={}&street=&huisnummer={}&toevoeging={}&langs=nl'.format(self.provider, self.zipcode, str(self.housenumber), self.suffix)
+
+        try:
+            jsonResponse = requests.get(jsonUrl).json()
+        except ValueError:
+            raise SystemExit('No JSON data received from ' + jsonUrl)
+
         jsonData = (jsonResponse['data']['ophaaldagen']['data'] + jsonResponse['data']['ophaaldagenNext']['data'])
 
         return jsonData

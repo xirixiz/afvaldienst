@@ -33,6 +33,7 @@ class Afvaldienst(object):
         if self.provider not in _providers:
             raise SystemExit("Invalid provider: {}, please verify".format(self.provider))
 
+        # self.date_today = '2020-06-16'
         self.date_today = datetime.today().strftime('%Y-%m-%d')
         today_to_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=1)
         self.date_tomorrow = datetime.strftime(today_to_tomorrow, '%Y-%m-%d')
@@ -67,21 +68,25 @@ class Afvaldienst(object):
     def __get_trashschedule(self):
         trashType = {}
         trashNextDays = {}
+        trashNextItem = {}
         trashToday = {}
         trashTomorrow = {}
         trashDAT = {}
+
+        multiTrashNextPickupItem = []
         multiTrashToday = []
         multiTrashTomorrow = []
         multiTrashDAT = []
+
+        trashNextPickupDate = []
+        trashFirstNextInDays = []
+        trashNextPickupItem = []
         trashScheduleToday = []
         trashScheduleTomorrow = []
         trashScheduleDAT = []
         trashScheduleFull = []
-        multiTrashNextPickupItem = []
-        trashNextPickupItem = []
-        trashNextPickupDate = []
-        trashFirstNextInDays = []
-        trashTypesExtended = ['today', 'tomorrow', 'next']
+
+        trashTypesExtended = ['today', 'tomorrow', 'first_next_in_days', 'first_next_item', 'first_next_date']
         trashTypesExtended.extend(self._trashTypes)
 
         if self.countToday.casefold() in ('true', 'yes'):
@@ -89,7 +94,7 @@ class Afvaldienst(object):
         else:
             countToday = self.date_tomorrow
 
-        # Some date count functions for next
+        # Some date count functions for next stuff
         def d(s):
             [year, month, day] = map(int, s.split('-'))
             return date(year, month, day)
@@ -97,32 +102,17 @@ class Afvaldienst(object):
         def days(start, end):
             return (d(end) - d(start)).days
 
+        def __gen_json(x, y):
+            global trash_json
+            trash_json = {}
+            trash_json['key'] = x.strip()
+            trash_json['value'] = y.strip()
+            return trash_json
+
         for name in trashTypesExtended:
             for item in self._jsonData:
                 name = item["nameType"]
                 dateConvert = datetime.strptime(item['date'], '%Y-%m-%d').strftime('%d-%m-%Y')
-
-                def __gen_json(x, y):
-                    global trash_json
-                    trash_json = {}
-                    trash_json['key'] = x.strip()
-                    trash_json['value'] = y.strip()
-                    return trash_json
-
-                if item['date'] >= countToday:
-                    if len(trashNextPickupItem) == 0:
-                        __gen_json('first_next_item', item['nameType'])
-                        dateChecker = item['date']
-                        trashNextPickupItem.append(trash_json)
-                        multiTrashNextPickupItem.append(item['nameType'])
-                    else:
-                        for element in trashNextPickupItem:
-                             if dateChecker == item['date']:
-                                element['value'] = ', '.join(multiTrashNextPickupItem).strip()
-
-                    if len(trashNextPickupDate) == 0:
-                        __gen_json('first_next_date', dateConvert)
-                        trashNextPickupDate.append(trash_json)
 
                 if name not in trashType:
                     if item['date'] >= self.date_today:
@@ -139,29 +129,45 @@ class Afvaldienst(object):
                             trashNextDays['key'] = "first_next_in_days"
                             trashNextDays['value'] = (days(self.date_today, item['date']))
                             trashFirstNextInDays.append(trashNextDays)
+                        if len(trashNextItem) == 0:
+                            trashType[name] = "first_next_item"
+                            trashNextItem['key'] = "first_next_item"
+                            trashNextItem['value'] = item['nameType'].strip()
+                            trashNextPickupItem.append(trashNextItem)
+                            dateCheck = item['date']
+                        if len(trashNextItem) != 0:
+                            if item['date'] == dateCheck:
+                                multiTrashNextPickupItem.append(item['nameType'].strip())
+                                trashNextItem['value'] = ', '.join(multiTrashNextPickupItem).strip()
+                        if len(trashNextPickupDate) == 0:
+                            __gen_json('first_next_date', dateConvert)
+                            trashNextPickupDate.append(trash_json)
 
                     if item['date'] == self.date_today:
-                        trashType['today'] = "today"
-                        trashToday['key'] = "today"
-                        trashScheduleToday.append(trashToday)
-                        multiTrashToday.append(item['nameType'])
-                        if len(multiTrashToday) != 0:
+                        if len(trashScheduleToday) == 0:
+                            trashType['today'] = "today"
+                            trashToday['key'] = "today"
+                            trashScheduleToday.append(trashToday)
+                        if len(trashScheduleToday) != 0:
+                            multiTrashToday.append(item['nameType'].strip())
                             trashToday['value'] = ', '.join(multiTrashToday).strip()
 
                     if item['date'] == self.date_tomorrow:
-                        trashType[name] = "tomorrow"
-                        trashTomorrow['key'] = "tomorrow"
-                        trashScheduleTomorrow.append(trashTomorrow)
-                        multiTrashTomorrow.append(item['nameType'])
-                        if len(multiTrashTomorrow) != 0:
+                        if len(trashScheduleTomorrow) == 0:
+                            trashType[name] = "tomorrow"
+                            trashTomorrow['key'] = "tomorrow"
+                            trashScheduleTomorrow.append(trashTomorrow)
+                        if len(trashScheduleTomorrow) != 0:
+                            multiTrashTomorrow.append(item['nameType'].strip())
                             trashTomorrow['value'] = ', '.join(multiTrashTomorrow).strip()
 
                     if item['date'] == self.date_dat:
-                        trashType[name] = "day_after_tomorrow"
-                        trashDAT['key'] = "day_after_tomorrow"
-                        trashScheduleDAT.append(trashDAT)
-                        multiTrashDAT.append(item['nameType'])
+                        if len(multiTrashDAT) == 0:
+                            trashType[name] = "day_after_tomorrow"
+                            trashDAT['key'] = "day_after_tomorrow"
+                            trashScheduleDAT.append(trashDAT)
                         if len(multiTrashDAT) != 0:
+                            multiTrashDAT.append(item['nameType'].strip())
                             trashDAT['value'] = ', '.join(multiTrashDAT).strip()
 
             if len(trashScheduleToday) == 0:

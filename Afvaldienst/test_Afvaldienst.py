@@ -5,7 +5,8 @@ from Afvaldienst import Afvaldienst
 #trash = Afvaldienst('mijnafvalwijzer', '5146EG', '6', '', 'false')
 #trash = Afvaldienst('mijnafvalwijzer', '6851GJ', '2', '', 'false')
 #trash = Afvaldienst('mijnafvalwijzer', '3911CX', '178', '', 'false')
-trash = Afvaldienst('mijnafvalwijzer', '1906KD', '17', '', 'false')
+#trash = Afvaldienst('mijnafvalwijzer', '1906KD', '17', '', 'false')
+trash = Afvaldienst('mijnafvalwijzer', '3863AT', '27', '', 'false')
 
 print(trash.trash_raw_json)
 

@@ -147,6 +147,7 @@ class Afvaldienst(object):
                         if len(trashScheduleToday) == 0:
                             trashType['today'] = "today"
                             trashToday['key'] = "today"
+                            trashToday['value'] = item['nameType'].strip()
                             trashScheduleToday.append(trashToday)
                         if len(trashScheduleToday) != 0:
                             multiTrashToday.append(item['nameType'].strip())
@@ -156,17 +157,19 @@ class Afvaldienst(object):
                         if len(trashScheduleTomorrow) == 0:
                             trashType[name] = "tomorrow"
                             trashTomorrow['key'] = "tomorrow"
+                            trashTomorrow['value'] = item['nameType'].strip()
                             trashScheduleTomorrow.append(trashTomorrow)
                         if len(trashScheduleTomorrow) != 0:
                             multiTrashTomorrow.append(item['nameType'].strip())
                             trashTomorrow['value'] = ', '.join(multiTrashTomorrow).strip()
 
                     if item['date'] == self.date_dat:
-                        if len(multiTrashDAT) == 0:
+                        if len(trashScheduleDAT) == 0:
                             trashType[name] = "day_after_tomorrow"
                             trashDAT['key'] = "day_after_tomorrow"
+                            trashDAT['value'] = item['nameType'].strip()
                             trashScheduleDAT.append(trashDAT)
-                        if len(multiTrashDAT) != 0:
+                        if len(trashScheduleDAT) != 0:
                             multiTrashDAT.append(item['nameType'].strip())
                             trashDAT['value'] = ', '.join(multiTrashDAT).strip()
 

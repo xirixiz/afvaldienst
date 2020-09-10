@@ -2,6 +2,12 @@
 
 Release History
 ---------------
+0.7.2 (2020-09-11)
+++++++++++++++++
+**Bugfix release**
+- removed systemexit, locks up hass on value error
+
+---------------
 0.6.9 (2019-06-05)
 ++++++++++++++++
 **Bugfix release**

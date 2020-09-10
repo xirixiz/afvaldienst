@@ -27,11 +27,11 @@ class Afvaldienst(object):
         if _zipcode:
             self.zipcode = _zipcode.group()
         else:
-            raise SystemExit("Zipcode has a incorrect format. Example: 3564KV")
+            print("Zipcode has a incorrect format. Example: 3564KV")
 
         _providers = ('mijnafvalwijzer', 'afvalstoffendienstkalender')
         if self.provider not in _providers:
-            raise SystemExit("Invalid provider: {}, please verify".format(self.provider))
+            print("Invalid provider: {}, please verify".format(self.provider))
 
         # self.date_today = '2020-06-16'
         self.date_today = datetime.today().strftime('%Y-%m-%d')
@@ -50,7 +50,7 @@ class Afvaldienst(object):
         try:
             jsonResponse = requests.get(jsonUrl).json()
         except ValueError:
-            raise SystemExit('No JSON data received from ' + jsonUrl)
+            print('No JSON data received from ' + jsonUrl)
 
         jsonData = (jsonResponse['data']['ophaaldagen']['data'] + jsonResponse['data']['ophaaldagenNext']['data'])
 

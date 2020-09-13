@@ -27,11 +27,16 @@ class Afvaldienst(object):
         if _zipcode:
             self.zipcode = _zipcode.group()
         else:
-            print("Zipcode has a incorrect format. Example: 3564KV")
+            print("Zipcode has a incorrect format. Example: 1111AA")
 
         _providers = ('mijnafvalwijzer', 'afvalstoffendienstkalender')
         if self.provider not in _providers:
             print("Invalid provider: {}, please verify".format(self.provider))
+        else:
+            if self.provider == 'mijnafvalwijzer':
+                self.apikey = '5ef443e778f41c4f75c69459eea6e6ae0c2d92de729aa0fc61653815fbd6a8ca'
+            if self.provider == 'afvalstoffendienstkalender':
+                self.apikey = '5ef443e778f41c4f75c69459eea6e6ae0c2d92de729aa0fc61653815fbd6a8ca'
 
         # self.date_today = '2020-06-16'
         self.date_today = datetime.today().strftime('%Y-%m-%d')
@@ -45,16 +50,24 @@ class Afvaldienst(object):
         self._trashScheduleFull, self._trashScheduleToday, self._trashScheduleTomorrow, self._trashScheduleDAT, self._trashNextPickupItem, self._trashNextPickupDate, self._trashFirstNextInDays = self.__get_trashschedule()
 
     def __get_data_json(self):
-        jsonUrl = 'https://json.{}.nl/?method=postcodecheck&postcode={}&street=&huisnummer={}&toevoeging={}&langs=nl'.format(self.provider, self.zipcode, str(self.housenumber), self.suffix)
+        jsonUrl = 'https://api.{}.nl/webservices/appsinput/?apikey={}&method=postcodecheck&postcode={}&street=&huisnummer={}&toevoeging={}&app_name=afvalwijzer&platform=phone&afvaldata={}&langs=nl'.format(self.provider, self.apikey, self.zipcode, str(self.housenumber), self.suffix, self.date_today)
 
         try:
-            jsonResponse = requests.get(jsonUrl).json()
+            rawResponse = requests.get(jsonUrl)
+        except requests.exceptions.RequestException as err:
+            raise ValueError(err)
+            raise ValueError('Provider URL not reachable or a different error appeared. Please verify the url:' + jsonUrl + 'manually in your browser. Text mixed with JSON should be visible.')
+
+        try:
+            jsonResponse = rawResponse.json()
         except ValueError:
-            print('No JSON data received from ' + jsonUrl)
+            raise ValueError('No JSON data received from ' + jsonUrl)
 
-        jsonData = (jsonResponse['data']['ophaaldagen']['data'] + jsonResponse['data']['ophaaldagenNext']['data'])
-
-        return jsonData
+        try:
+            jsonData = (jsonResponse['ophaaldagen']['data'] + jsonResponse['ophaaldagenNext']['data'])
+            return jsonData
+        except ValueError:
+            raise ValueError('Invalid JSON data received from ' + jsonUrl)
 
     def __get_data_trash_types(self):
         trashTypes = []

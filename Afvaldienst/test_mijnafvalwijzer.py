@@ -2,7 +2,7 @@
 
 from Afvaldienst import Afvaldienst
 
-trash = Afvaldienst('mijnafvalwijzer', 'api_token', '5146EG', '2', '', 'false')
+trash = Afvaldienst('mijnafvalwijzer', '', '5146EG', '2', '', 'false')
 #trash = Afvaldienst('mijnafvalwijzer', '6851GJ', '2', '', 'false')
 #trash = Afvaldienst('mijnafvalwijzer', '3911CX', '178', '', 'false')
 #trash = Afvaldienst('mijnafvalwijzer', '1906KD', '17', '', 'false')

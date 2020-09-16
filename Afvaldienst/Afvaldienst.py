@@ -126,7 +126,7 @@ class Afvaldienst(object):
             # Append trash names and pickup dates
             if not any(x['key'] == trash_name for x in trash_schedule):
                 if trash_date >= self.date_today:
-                    self.__gen_json(trash_name, trash_date, days_remaining=(self.__calculate_days_between_dates(self.date_today, trash_date)))
+                    self.__gen_json(trash_name, trash_date_custom_format, days_remaining=(self.__calculate_days_between_dates(self.date_today, trash_date)))
                     trash_schedule.append(gen_json)
 
             # Append key with value none if key not found
@@ -193,7 +193,7 @@ class Afvaldienst(object):
 
                 # Append first upcoming date for next pickup
                 if not any(x['key'] == 'first_next_date' for x in trash_schedule_custom):
-                    self.__gen_json("first_next_date", trash_date)
+                    self.__gen_json("first_next_date", trash_date_custom_format)
                     trash_schedule_custom.append(gen_json)
 
         # Append all trash types from the current year

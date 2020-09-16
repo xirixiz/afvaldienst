@@ -16,9 +16,9 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 
 class Afvaldienst(object):
-    def __init__(self, provider, apikey, zipcode, housenumber, suffix, start_date):
+    def __init__(self, provider, api_token, zipcode, housenumber, suffix, start_date):
         self.provider = provider
-        self.apikey = apikey
+        self.api_token = api_token
         self.housenumber = housenumber
         self.suffix = suffix
         self.start_date = start_date
@@ -34,7 +34,7 @@ class Afvaldienst(object):
         if self.provider not in _providers:
             ValueError("Invalid provider: {}, please verify".format(self.provider))
 
-        if not self.apikey:
+        if not self.api_token:
             ValueError("The API key has not been specified, please verify.")
 
         self.date_today = datetime.today().strftime('%Y-%m-%d')
@@ -48,7 +48,7 @@ class Afvaldienst(object):
         self._trash_schedule, self._trash_schedule_custom = self.__get_trash_schedule()
 
     def __get_json(self):
-        url = 'https://api.{}.nl/webservices/appsinput/?apikey={}&method=postcodecheck&postcode={}&street=&huisnummer={}&toevoeging={}&app_name=afvalwijzer&platform=phone&afvaldata={}&langs=nl'.format(self.provider, self.apikey, self.zipcode, str(self.housenumber), self.suffix, self.date_today)
+        url = 'https://api.{}.nl/webservices/appsinput/?apikey={}&method=postcodecheck&postcode={}&street=&huisnummer={}&toevoeging={}&app_name=afvalwijzer&platform=phone&afvaldata={}&langs=nl'.format(self.provider, self.api_token, self.zipcode, int(self.housenumber), self.suffix, self.date_today)
 
         try:
             raw_response = requests.get(url)

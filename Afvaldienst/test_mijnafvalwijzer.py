@@ -2,7 +2,7 @@
 
 from Afvaldienst import Afvaldienst
 
-trash = Afvaldienst('mijnafvalwijzer', '5ef443e778f41c4f75c69459eea6e6ae0c2d92de729aa0fc61653815fbd6a8ca', '5146EG', '2', '', 'false')
+trash = Afvaldienst('mijnafvalwijzer', 'api_token', '5146EG', '2', '', 'false')
 #trash = Afvaldienst('mijnafvalwijzer', '6851GJ', '2', '', 'false')
 #trash = Afvaldienst('mijnafvalwijzer', '3911CX', '178', '', 'false')
 #trash = Afvaldienst('mijnafvalwijzer', '1906KD', '17', '', 'false')
@@ -19,5 +19,6 @@ print("\n")
 print(trash.trash_json)
 print("\n")
 
+# TEST_DATA
 # self.date_today = '2020-09-17'
 # json_data = [{"nameType":"gft","type":"gft","date":"2020-01-03"},{"nameType":"pmd","type":"pmd","date":"2020-01-09"},{"nameType":"restafval","type":"restafval","date":"2020-01-10"},{"nameType":"kerstbomen","type":"kerstbomen","date":"2020-01-11"},{"nameType":"restafval","type":"restafval","date":"2020-07-24"},{"nameType":"gft","type":"gft","date":"2020-07-31"},{"nameType":"pmd","type":"pmd","date":"2020-08-06"},{"nameType":"gft","type":"gft","date":"2020-08-14"},{"nameType":"papier","type":"papier","date":"2020-08-19"},{"nameType":"pmd","type":"pmd","date":"2020-08-20"},{"nameType":"restafval","type":"restafval","date":"2020-08-21"},{"nameType":"gft","type":"gft","date":"2020-08-28"},{"nameType":"pmd","type":"pmd","date":"2020-09-03"},{"nameType":"gft","type":"gft","date":"2020-09-11"},{"nameType":"papier","type":"papier","date":"2020-09-17"},{"nameType":"pmd","type":"pmd","date":"2020-09-17"},{"nameType":"restafval","type":"restafval","date":"2020-09-18"},{"nameType":"gft","type":"gft","date":"2020-09-25"},{"nameType":"pmd","type":"pmd","date":"2020-10-01"},{"nameType":"gft","type":"gft","date":"2020-10-09"},{"nameType":"pmd","type":"pmd","date":"2020-10-15"},{"nameType":"restafval","type":"restafval","date":"2020-10-16"},{"nameType":"papier","type":"papier","date":"2020-10-21"},{"nameType":"gft","type":"gft","date":"2020-10-23"},{"nameType":"pmd","type":"pmd","date":"2020-10-29"},{"nameType":"gft","type":"gft","date":"2020-11-06"},{"nameType":"pmd","type":"pmd","date":"2020-11-12"},{"nameType":"restafval","type":"restafval","date":"2020-11-13"},{"nameType":"papier","type":"papier","date":"2020-11-18"},{"nameType":"gft","type":"gft","date":"2020-11-20"},{"nameType":"pmd","type":"pmd","date":"2020-11-26"},{"nameType":"gft","type":"gft","date":"2020-12-04"},{"nameType":"pmd","type":"pmd","date":"2020-12-10"},{"nameType":"restafval","type":"restafval","date":"2020-12-11"},{"nameType":"papier","type":"papier","date":"2020-12-16"},{"nameType":"gft","type":"gft","date":"2020-12-18"},{"nameType":"pmd","type":"pmd","date":"2020-12-24"}]

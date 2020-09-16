@@ -2,6 +2,12 @@
 
 Release History
 ---------------
+1.0.1 (2020-09-16)
+++++++++++++++++
+**Bugfix release**
+- remove api tokens (as requested by the provider(s))
+
+---------------
 1.0.0 (2020-09-15)
 ++++++++++++++++
 **Bugfix release**

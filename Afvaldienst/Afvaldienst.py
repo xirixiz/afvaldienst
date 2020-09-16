@@ -9,244 +9,208 @@ Author: Bram van Dartel (https://github.com/xirixiz/)
 ## Usage - see README.rst
 
 """
-
 import re
 import requests
 import json
+from collections import defaultdict
 from datetime import date, datetime, timedelta
 
-trash_json = {}
-
 class Afvaldienst(object):
-    def __init__(self, provider, zipcode, housenumber, suffix, count_today):
+    def __init__(self, provider, apikey, zipcode, housenumber, suffix, start_date):
         self.provider = provider
+        self.apikey = apikey
         self.housenumber = housenumber
         self.suffix = suffix
-        self.countToday = count_today
+        self.start_date = start_date
+
         _zipcode = re.match('^\d{4}[a-zA-Z]{2}', zipcode)
+
         if _zipcode:
             self.zipcode = _zipcode.group()
         else:
-            print("Zipcode has a incorrect format. Example: 1111AA")
+            ValueError("Zipcode has a incorrect format. Example: 1111AA")
 
         _providers = ('mijnafvalwijzer', 'afvalstoffendienstkalender')
         if self.provider not in _providers:
-            print("Invalid provider: {}, please verify".format(self.provider))
-        else:
-            if self.provider == 'mijnafvalwijzer':
-                self.apikey = '5ef443e778f41c4f75c69459eea6e6ae0c2d92de729aa0fc61653815fbd6a8ca'
-            if self.provider == 'afvalstoffendienstkalender':
-                self.apikey = '5ef443e778f41c4f75c69459eea6e6ae0c2d92de729aa0fc61653815fbd6a8ca'
+            ValueError("Invalid provider: {}, please verify".format(self.provider))
 
-        # self.date_today = '2020-06-16'
+        if not self.apikey:
+            ValueError("The API key has not been specified, please verify.")
+
         self.date_today = datetime.today().strftime('%Y-%m-%d')
         today_to_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=1)
         self.date_tomorrow = datetime.strftime(today_to_tomorrow, '%Y-%m-%d')
         day_after_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=2)
-        self.date_dat = datetime.strftime(day_after_tomorrow, '%Y-%m-%d')
+        self.date_day_after_tomorrow = datetime.strftime(day_after_tomorrow, '%Y-%m-%d')
 
-        self._jsonData = self.__get_data_json()
-        self._trashTypes = self.__get_data_trash_types()
-        self._trashScheduleFull, self._trashScheduleToday, self._trashScheduleTomorrow, self._trashScheduleDAT, self._trashNextPickupItem, self._trashNextPickupDate, self._trashFirstNextInDays = self.__get_trashschedule()
+        self._trash_json = self.__get_json()
+        self._trash_types = self.__get_trash_types()
+        self._trash_schedule, self._trash_schedule_custom = self.__get_trash_schedule()
 
-    def __get_data_json(self):
-        jsonUrl = 'https://api.{}.nl/webservices/appsinput/?apikey={}&method=postcodecheck&postcode={}&street=&huisnummer={}&toevoeging={}&app_name=afvalwijzer&platform=phone&afvaldata={}&langs=nl'.format(self.provider, self.apikey, self.zipcode, str(self.housenumber), self.suffix, self.date_today)
+    def __get_json(self):
+        url = 'https://api.{}.nl/webservices/appsinput/?apikey={}&method=postcodecheck&postcode={}&street=&huisnummer={}&toevoeging={}&app_name=afvalwijzer&platform=phone&afvaldata={}&langs=nl'.format(self.provider, self.apikey, self.zipcode, str(self.housenumber), self.suffix, self.date_today)
 
         try:
-            rawResponse = requests.get(jsonUrl)
+            raw_response = requests.get(url)
         except requests.exceptions.RequestException as err:
             raise ValueError(err)
-            raise ValueError('Provider URL not reachable or a different error appeared. Please verify the url:' + jsonUrl + 'manually in your browser. Text mixed with JSON should be visible.')
+            raise ValueError('Provider URL not reachable or a different error appeared. Please verify the url:' + url + 'manually in your browser. Text mixed with JSON should be visible.')
 
         try:
-            jsonResponse = rawResponse.json()
+            json_response = raw_response.json()
         except ValueError:
-            raise ValueError('No JSON data received from ' + jsonUrl)
+            raise ValueError('No JSON data received from ' + url)
 
         try:
-            jsonData = (jsonResponse['ophaaldagen']['data'] + jsonResponse['ophaaldagenNext']['data'])
-            return jsonData
+            json_data = (json_response['ophaaldagen']['data'] + json_response['ophaaldagenNext']['data'])
+            return json_data
         except ValueError:
-            raise ValueError('Invalid JSON data received from ' + jsonUrl)
+            raise ValueError('Invalid JSON data received from ' + url)
 
-    def __get_data_trash_types(self):
-        trashTypes = []
-        for item in self._jsonData:
-            trash = item["nameType"].strip()
-            if trash not in trashTypes:
-                trashTypes.append(trash)
+    # Function: create a list of all trash types within the json response
+    def __get_trash_types(self):
+        trash_types = list()
+        for x in self._trash_json:
+            trash_type = x["nameType"].strip()
+            if trash_type not in trash_types:
+                trash_types.append(trash_type)
+        return trash_types
 
-        return trashTypes
+    # Function: json/dict generator
+    def __gen_json(self, key, value, **kwargs):
+        global gen_json
+        gen_json = dict()
+        gen_json['key'] = key
+        gen_json['value'] = value
+        if kwargs:
+            gen_json['days_remaining'] = kwargs.get('days_remaining', None)
+        return gen_json
 
-    def __get_trashschedule(self):
-        trashType = {}
-        trashNextDays = {}
-        trashNextItem = {}
-        trashToday = {}
-        trashTomorrow = {}
-        trashDAT = {}
+    # Function: calculate amount of days between two dates
+    def __calculate_days_between_dates(self, start, end):
+        start_date = datetime.strptime(start, "%Y-%m-%d")
+        end_date = datetime.strptime(end, "%Y-%m-%d")
+        return (abs((end_date-start_date).days))
 
-        multiTrashNextPickupItem = []
-        multiTrashToday = []
-        multiTrashTomorrow = []
-        multiTrashDAT = []
+    # Function: trash_schedule and trash_schedule_custom generator
+    def __get_trash_schedule(self):
+        trash_schedule = list()
+        trash_schedule_custom = list()
+        temp_dict = dict()
+        temp_list_today = list()
+        temp_list_tomorrow = list()
+        temp_list_day_after_tomorrow = list()
+        temp_list_first_next_item = list()
 
-        trashNextPickupDate = []
-        trashFirstNextInDays = []
-        trashNextPickupItem = []
-        trashScheduleToday = []
-        trashScheduleTomorrow = []
-        trashScheduleDAT = []
-        trashScheduleFull = []
-
-        trashTypesExtended = ['today', 'tomorrow', 'first_next_in_days', 'first_next_item', 'first_next_date']
-        trashTypesExtended.extend(self._trashTypes)
-
-        if self.countToday.casefold() in ('true', 'yes'):
-            countToday = self.date_today
+        # Start counting wihth Today's date or with Tomorrow's date
+        if self.start_date.casefold() in ('true', 'yes'):
+            start_date = self.date_today
         else:
-            countToday = self.date_tomorrow
+            start_date = self.date_tomorrow
 
-        # Some date count functions for next stuff
-        def d(s):
-            [year, month, day] = map(int, s.split('-'))
-            return date(year, month, day)
+        for json in self._trash_json:
+            trash_name = json['nameType'].strip()
+            trash_date = json['date']
+            trash_date_custom_format = datetime.strptime(json['date'], '%Y-%m-%d').strftime('%d-%m-%Y')
 
-        def days(start, end):
-            return (d(end) - d(start)).days
+            # Append trash names and pickup dates
+            if not any(x['key'] == trash_name for x in trash_schedule):
+                if trash_date >= self.date_today:
+                    self.__gen_json(trash_name, trash_date, days_remaining=(self.__calculate_days_between_dates(self.date_today, trash_date)))
+                    trash_schedule.append(gen_json)
 
-        def __gen_json(x, y):
-            global trash_json
-            trash_json = {}
-            trash_json['key'] = x.strip()
-            trash_json['value'] = y.strip()
-            return trash_json
+            # Append key with value none if key not found
+            if not any(x['key'] == 'today' for x in trash_schedule_custom):
+                self.__gen_json('today', None)
+                trash_schedule_custom.append(gen_json)
+            if not any(x['key'] == 'tomorrow' for x in trash_schedule_custom):
+                self.__gen_json('tomorrow', None)
+                trash_schedule_custom.append(gen_json)
+            if not any(x['key'] == 'day_after_tomorrow' for x in trash_schedule_custom):
+                self.__gen_json('day_after_tomorrow', None)
+                trash_schedule_custom.append(gen_json)
 
-        for name in trashTypesExtended:
-            for item in self._jsonData:
-                name = item["nameType"]
-                dateConvert = datetime.strptime(item['date'], '%Y-%m-%d').strftime('%d-%m-%Y')
+            # Append today's (multiple) trash items
+            if trash_date == self.date_today:
+                if any(x['key'] == 'today' for x in trash_schedule_custom):
+                    temp_list_today.append(trash_name)
+                    for dictionary in trash_schedule_custom:
+                        if dictionary['key'] == 'today':
+                            dictionary['value'] = ', '.join(temp_list_today)
+                else:
+                    self.__gen_json('today', trash_name)
+                    trash_schedule_custom.append(gen_json)
 
-                if name not in trashType:
-                    if item['date'] >= self.date_today:
-                        trash = {}
-                        trashType[name] = item["nameType"].strip()
-                        trash['key'] = item['nameType'].strip()
-                        trash['value'] = dateConvert
-                        trash['days_remaining'] = (days(self.date_today, item['date']))
-                        trashScheduleFull.append(trash)
+            # Append tomorrow's (multiple) trash items
+            if trash_date == self.date_tomorrow:
+                if any(x['key'] == 'tomorrow' for x in trash_schedule_custom):
+                    temp_list_tomorrow.append(trash_name)
+                    for dictionary in trash_schedule_custom:
+                        if dictionary['key'] == 'tomorrow':
+                            dictionary['value'] = ', '.join(temp_list_tomorrow)
+                else:
+                    self.__gen_json('tomorrow', trash_name)
+                    trash_schedule_custom.append(gen_json)
 
-                    if item['date'] >= countToday:
-                        if len(trashNextDays) == 0:
-                            trashType[name] = "first_next_in_days"
-                            trashNextDays['key'] = "first_next_in_days"
-                            trashNextDays['value'] = (days(self.date_today, item['date']))
-                            trashFirstNextInDays.append(trashNextDays)
-                        if len(trashNextItem) == 0:
-                            trashType[name] = "first_next_item"
-                            trashNextItem['key'] = "first_next_item"
-                            trashNextItem['value'] = item['nameType'].strip()
-                            trashNextPickupItem.append(trashNextItem)
-                            dateCheck = item['date']
-                        if len(trashNextItem) != 0:
-                            if item['date'] == dateCheck:
-                                multiTrashNextPickupItem.append(item['nameType'].strip())
-                                trashNextItem['value'] = ', '.join(multiTrashNextPickupItem).strip()
-                        if len(trashNextPickupDate) == 0:
-                            __gen_json('first_next_date', dateConvert)
-                            trashNextPickupDate.append(trash_json)
+            # # Append day_after_tomorrow's (multiple) trash items
+            if trash_date == self.date_day_after_tomorrow:
+                if any(x['key'] == 'day_after_tomorrow' for x in trash_schedule_custom):
+                    temp_list_day_after_tomorrow.append(trash_name)
+                    for dictionary in trash_schedule_custom:
+                        if dictionary['key'] == 'day_after_tomorrow':
+                            dictionary['value'] = ', '.join(temp_list_day_after_tomorrow)
+                else:
+                    self.__gen_json('day_after_tomorrow', trash_name)
+                    trash_schedule_custom.append(gen_json)
 
-                    if item['date'] == self.date_today:
-                        if len(trashScheduleToday) == 0:
-                            trashType['today'] = "today"
-                            trashToday['key'] = "today"
-                            trashToday['value'] = item['nameType'].strip()
-                            trashScheduleToday.append(trashToday)
-                        if len(trashScheduleToday) != 0:
-                            multiTrashToday.append(item['nameType'].strip())
-                            trashToday['value'] = ', '.join(multiTrashToday).strip()
+            if trash_date >= start_date:
+                # Append days until next pickup
+                if not any(x['key'] == 'first_next_in_days' for x in trash_schedule_custom):
+                    self.__gen_json("first_next_in_days", (self.__calculate_days_between_dates(self.date_today, trash_date)))
+                    trash_schedule_custom.append(gen_json)
 
-                    if item['date'] == self.date_tomorrow:
-                        if len(trashScheduleTomorrow) == 0:
-                            trashType[name] = "tomorrow"
-                            trashTomorrow['key'] = "tomorrow"
-                            trashTomorrow['value'] = item['nameType'].strip()
-                            trashScheduleTomorrow.append(trashTomorrow)
-                        if len(trashScheduleTomorrow) != 0:
-                            multiTrashTomorrow.append(item['nameType'].strip())
-                            trashTomorrow['value'] = ', '.join(multiTrashTomorrow).strip()
+                # Append the first upcoming (multiple) trash name(s) to be picked up
+                if not any(x['key'] == 'first_next_item' for x in trash_schedule_custom):
+                    self.__gen_json("first_next_item", trash_name)
+                    trash_schedule_custom.append(gen_json)
+                    dateCheck = trash_date
+                if any(x['key'] == 'first_next_item' for x in trash_schedule_custom):
+                    if trash_date == dateCheck:
+                        temp_list_first_next_item.append(trash_name)
+                        for dictionary in trash_schedule_custom:
+                            if dictionary['key'] == 'first_next_item':
+                                dictionary['value'] = ', '.join(temp_list_first_next_item)
 
-                    if item['date'] == self.date_dat:
-                        if len(trashScheduleDAT) == 0:
-                            trashType[name] = "day_after_tomorrow"
-                            trashDAT['key'] = "day_after_tomorrow"
-                            trashDAT['value'] = item['nameType'].strip()
-                            trashScheduleDAT.append(trashDAT)
-                        if len(trashScheduleDAT) != 0:
-                            multiTrashDAT.append(item['nameType'].strip())
-                            trashDAT['value'] = ', '.join(multiTrashDAT).strip()
+                # Append first upcoming date for next pickup
+                if not any(x['key'] == 'first_next_date' for x in trash_schedule_custom):
+                    self.__gen_json("first_next_date", trash_date)
+                    trash_schedule_custom.append(gen_json)
 
-            if len(trashScheduleToday) == 0:
-                trashType[name] = "today"
-                trashToday['key'] = "today"
-                trashToday['value'] = "None"
-                trashScheduleToday.append(trashToday)
+        # Append all trash types from the current year
+        for trash_name in self._trash_types:
+            if not any(x['key'] == trash_name for x in trash_schedule):
+            #if any(trash_name in x for x in trash_schedule) == False:
+                self.__gen_json(trash_name, None)
+                trash_schedule.append(gen_json)
 
-            if len(trashScheduleTomorrow) == 0:
-                trashType[name] = "tomorrow"
-                trashTomorrow['key'] = "tomorrow"
-                trashTomorrow['value'] = "None"
-                trashScheduleTomorrow.append(trashTomorrow)
-
-            if len(trashScheduleDAT) == 0:
-                trashType[name] = "day_after_tomorrow"
-                trashDAT['key'] = "day_after_tomorrow"
-                trashDAT['value'] = "None"
-                trashScheduleDAT.append(trashDAT)
-
-        return trashScheduleFull, trashScheduleToday, trashScheduleTomorrow, trashScheduleDAT, trashNextPickupItem, trashNextPickupDate, trashFirstNextInDays
+        return trash_schedule, trash_schedule_custom
 
     @property
-    def trash_raw_json(self):
+    def trash_json(self):
         """Return both the pickup date and the container type."""
-        return self._jsonData
+        return self._trash_json
 
     @property
-    def trash_schedulefull_json(self):
-        """Return both the pickup date and the container type."""
-        return self._trashScheduleFull
+    def trash_schedule(self):
+        """Return both the pickup date and the container type from the provider."""
+        return self._trash_schedule
 
     @property
-    def trash_schedule_next_days_json(self):
-        """Return both the pickup date and the container type."""
-        return self._trashFirstNextInDays
+    def trash_schedule_custom(self):
+        """Return a custom list of added trash pickup information."""
+        return self._trash_schedule_custom
 
     @property
-    def trash_schedule_today_json(self):
-        """Return both the pickup date and the container type."""
-        return self._trashScheduleToday
-
-    @property
-    def trash_schedule_tomorrow_json(self):
-        """Return both the pickup date and the container type."""
-        return self._trashScheduleTomorrow
-
-    @property
-    def trash_schedule_dat_json(self):
-        """Return both the pickup date and the container type."""
-        return self._trashScheduleDAT
-
-    @property
-    def trash_schedule_next_item_json(self):
-        """Return both the pickup date and the container type."""
-        return self._trashNextPickupItem
-
-    @property
-    def trash_schedule_next_date_json(self):
-        """Return both the pickup date and the container type."""
-        return self._trashNextPickupDate
-
-    @property
-    def trash_type_list(self):
-        """Return both the pickup date and the container type."""
-        return self._trashTypes
+    def trash_types(self):
+        """Return all available trash types from the provider."""
+        return self._trash_types

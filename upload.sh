@@ -1,5 +1,8 @@
 rm -rf dist/*
 python3 setup.py sdist
-#twine upload dist/*
-/volume1/homes/xirixiz/.local/bin/twine upload dist/*
+if -f /volume1/homes/xirixiz/.local/bin/twine; then
+  /volume1/homes/xirixiz/.local/bin/twine upload dist/*
+else
+  twine upload dist/*
+fi
 rm -rf dist/*

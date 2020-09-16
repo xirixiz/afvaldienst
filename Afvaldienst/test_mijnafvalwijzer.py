@@ -16,8 +16,11 @@ print(trash.trash_schedule_custom)
 print("\n")
 print(trash.trash_types)
 print("\n")
-print(trash.trash_json)
+print(trash.trash_types_from_schedule)
 print("\n")
+
+# print(trash.trash_json)
+# print("\n")
 
 # TEST_DATA
 # self.date_today = '2020-09-17'

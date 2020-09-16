@@ -46,6 +46,7 @@ class Afvaldienst(object):
         self._trash_json = self.__get_json()
         self._trash_types = self.__get_trash_types()
         self._trash_schedule, self._trash_schedule_custom = self.__get_trash_schedule()
+        self._trash_types_from_schedule = self.__get_trash_types_from_schedule()
 
     def __get_json(self):
         url = 'https://api.{}.nl/webservices/appsinput/?apikey={}&method=postcodecheck&postcode={}&street=&huisnummer={}&toevoeging={}&app_name=afvalwijzer&platform=phone&afvaldata={}&langs=nl'.format(self.provider, self.api_token, self.zipcode, int(self.housenumber), self.suffix, self.date_today)
@@ -76,6 +77,21 @@ class Afvaldienst(object):
                 trash_types.append(trash_type)
         return trash_types
 
+    # Function: create a list of all trash types from trash_schedule and trash_schedule_custom
+    def __get_trash_types_from_schedule(self):
+        trash_types_from_schedule = list()
+        for x in self.trash_schedule + self.trash_schedule_custom:
+            trash_type = x["key"].strip()
+            if trash_type not in trash_types_from_schedule:
+                trash_types_from_schedule.append(trash_type)
+        return trash_types_from_schedule
+
+    # Function: calculate amount of days between two dates
+    def __calculate_days_between_dates(self, start, end):
+        start_date = datetime.strptime(start, "%Y-%m-%d")
+        end_date = datetime.strptime(end, "%Y-%m-%d")
+        return (abs((end_date-start_date).days))
+
     # Function: json/dict generator
     def __gen_json(self, key, value, **kwargs):
         global gen_json
@@ -85,12 +101,6 @@ class Afvaldienst(object):
         if kwargs:
             gen_json['days_remaining'] = kwargs.get('days_remaining', None)
         return gen_json
-
-    # Function: calculate amount of days between two dates
-    def __calculate_days_between_dates(self, start, end):
-        start_date = datetime.strptime(start, "%Y-%m-%d")
-        end_date = datetime.strptime(end, "%Y-%m-%d")
-        return (abs((end_date-start_date).days))
 
     # Function: trash_schedule and trash_schedule_custom generator
     def __get_trash_schedule(self):
@@ -189,8 +199,7 @@ class Afvaldienst(object):
         # Append all trash types from the current year
         for trash_name in self._trash_types:
             if not any(x['key'] == trash_name for x in trash_schedule):
-            #if any(trash_name in x for x in trash_schedule) == False:
-                self.__gen_json(trash_name, None)
+                self.__gen_json(trash_name, None, days_remaining=None)
                 trash_schedule.append(gen_json)
 
         return trash_schedule, trash_schedule_custom
@@ -209,6 +218,11 @@ class Afvaldienst(object):
     def trash_schedule_custom(self):
         """Return a custom list of added trash pickup information."""
         return self._trash_schedule_custom
+
+    @property
+    def trash_types_from_schedule(self):
+        """Return all available trash types from the provider."""
+        return self._trash_types_from_schedule
 
     @property
     def trash_types(self):

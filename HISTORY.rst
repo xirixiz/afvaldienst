@@ -2,6 +2,12 @@
 
 Release History
 ---------------
+1.0.2 (2020-09-16)
+++++++++++++++++
+**Bugfix release**
+- add trash_schedule and trash_schedule_custom trash type list overview
+
+---------------
 1.0.1 (2020-09-16)
 ++++++++++++++++
 **Bugfix release**

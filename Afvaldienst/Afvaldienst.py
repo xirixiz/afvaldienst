@@ -16,26 +16,27 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 
 class Afvaldienst(object):
-    def __init__(self, provider, api_token, zipcode, housenumber, suffix, start_date):
+    def __init__(self, provider, api_token, zipcode, housenumber, suffix, start_date, label):
         self.provider = provider
         self.api_token = api_token
         self.housenumber = housenumber
         self.suffix = suffix
         self.start_date = start_date
+        self.label_none = label
 
         _zipcode = re.match('^\d{4}[a-zA-Z]{2}', zipcode)
 
         if _zipcode:
             self.zipcode = _zipcode.group()
         else:
-            ValueError("Zipcode has a incorrect format. Example: 1111AA")
+            print("Zipcode has a incorrect format. Example: 1111AA")
 
         _providers = ('mijnafvalwijzer', 'afvalstoffendienstkalender')
         if self.provider not in _providers:
-            ValueError("Invalid provider: {}, please verify".format(self.provider))
+            print("Invalid provider: {}, please verify".format(self.provider))
 
         if not self.api_token:
-            ValueError("The API key has not been specified, please verify.")
+            print("The API key has not been specified, please verify.")
 
         self.date_today = datetime.today().strftime('%Y-%m-%d')
         today_to_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=1)
@@ -99,7 +100,7 @@ class Afvaldienst(object):
         gen_json['key'] = key
         gen_json['value'] = value
         if kwargs:
-            gen_json['days_remaining'] = kwargs.get('days_remaining', None)
+            gen_json['days_remaining'] = kwargs.get('days_remaining', self.label_none)
         return gen_json
 
     # Function: trash_schedule and trash_schedule_custom generator
@@ -131,13 +132,13 @@ class Afvaldienst(object):
 
             # Append key with value none if key not found
             if not any(x['key'] == 'today' for x in trash_schedule_custom):
-                self.__gen_json('today', None)
+                self.__gen_json('today', self.label_none)
                 trash_schedule_custom.append(gen_json)
             if not any(x['key'] == 'tomorrow' for x in trash_schedule_custom):
-                self.__gen_json('tomorrow', None)
+                self.__gen_json('tomorrow', self.label_none)
                 trash_schedule_custom.append(gen_json)
             if not any(x['key'] == 'day_after_tomorrow' for x in trash_schedule_custom):
-                self.__gen_json('day_after_tomorrow', None)
+                self.__gen_json('day_after_tomorrow', self.label_none)
                 trash_schedule_custom.append(gen_json)
 
             # Append today's (multiple) trash items
@@ -199,7 +200,7 @@ class Afvaldienst(object):
         # Append all trash types from the current year
         for trash_name in self._trash_types:
             if not any(x['key'] == trash_name for x in trash_schedule):
-                self.__gen_json(trash_name, None, days_remaining=None)
+                self.__gen_json(trash_name, self.label_none, days_remaining=self.label_none)
                 trash_schedule.append(gen_json)
 
         return trash_schedule, trash_schedule_custom

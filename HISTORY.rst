@@ -2,6 +2,18 @@
 
 Release History
 ---------------
+1.0.4 (2020-09-16)
+++++++++++++++++
+**Bugfix release**
+- Add trash None value on no data
+
+---------------
+1.0.3 (2020-09-16)
+++++++++++++++++
+**Bugfix release**
+- add trash_schedule and trash_schedule_custom trash type list overview
+
+---------------
 1.0.2 (2020-09-16)
 ++++++++++++++++
 **Bugfix release**

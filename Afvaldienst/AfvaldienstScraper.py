@@ -46,7 +46,7 @@ class AfvaldienstScraper(object):
         self._trash_types_from_schedule = self.__get_trash_types_from_schedule()
 
     def get_date_from_afvaltype(self, html, afvaltype, afvalnaam):
-        MONTH_TO_NUMBER = {
+        month_to_number = {
             "jan": "01",
             "feb": "02",
             "mrt": "03",
@@ -73,22 +73,6 @@ class AfvaldienstScraper(object):
             "december": "12",
         }
 
-        NUMBER_TO_MONTH = {
-            1: "januari",
-            2: "februari",
-            3: "maart",
-            4: "april",
-            5: "mei",
-            6: "juni",
-            7: "juli",
-            8: "augustus",
-            9: "september",
-            10: "oktober",
-            11: "november",
-            12: "december",
-        }
-
-
         try:
             results = html.findAll("p", {"class": afvaltype})
 
@@ -105,7 +89,7 @@ class AfvaldienstScraper(object):
                     date = date.string
 
                 day = date.split()[1]
-                month = MONTH_TO_NUMBER[date.split()[2]]
+                month = month_to_number[date.split()[2]]
                 # the year is always this year because it's a 'jaaroverzicht'
                 year = datetime.today().year
 

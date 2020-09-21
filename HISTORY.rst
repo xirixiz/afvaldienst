@@ -2,6 +2,24 @@
 
 Release History
 ---------------
+1.0.6 (2020-09-21)
+++++++++++++++++
+**New release**
+- Remove unnecessary data
+
+---------------
+1.0.6 (2020-09-21)
+++++++++++++++++
+**New release**
+- Add scraper funcionality
+
+---------------
+1.0.5 (2020-09-21)
+++++++++++++++++
+**Bugfix release**
+- Multiple minor bugs regarding the new api from mijnafvalwijzer
+
+---------------
 1.0.4 (2020-09-16)
 ++++++++++++++++
 **Bugfix release**

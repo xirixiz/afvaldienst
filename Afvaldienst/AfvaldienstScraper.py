@@ -34,8 +34,8 @@ class AfvaldienstScraper(object):
         if self.provider not in _providers:
             print("Invalid provider: {}, please verify".format(self.provider))
 
-
-        self.date_today = datetime.today().strftime('%Y-%m-%d')
+        self.date_today = '2020-09-25'
+        #self.date_today = datetime.today().strftime('%Y-%m-%d')
         today_to_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=1)
         self.date_tomorrow = datetime.strftime(today_to_tomorrow, '%Y-%m-%d')
         day_after_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=2)
@@ -121,9 +121,7 @@ class AfvaldienstScraper(object):
 
             # Place all possible values in the dictionary even if they are not necessary
             waste_dict = {}
-            waste_dict_custom = {}
             waste_list = []
-            waste_list_custom = []
 
             # find gft.
             waste_dict["gft"] = self.get_date_from_afvaltype(jaaroverzicht, "gft", "gft")
@@ -155,23 +153,39 @@ class AfvaldienstScraper(object):
             waste_dict["kerstbomen"] = self.get_date_from_afvaltype(jaaroverzicht, "kerstboom", "kerstbomen")
 
             # append custom sensors
+            waste_dict_custom = {}
+            waste_list_custom = []
+            today_multiple_items = []
+            tomorrow_multiple_items = []
+            day_after_tomorrow_multiple_items = []
+            first_waste_type_multiple_items = []
+
             waste_dict_temp = {key:value for key,value in waste_dict.items() if len(value) != 0}
             for key,value in waste_dict_temp.items():
                 if value == self.date_today:
                     if "today" in waste_dict_custom.keys():
-                        waste_dict_custom["today"] = [waste_dict_custom["today"], key]
+                        today_multiple_items.append(key)
+                        waste_dict_custom["today"] = ', '.join(today_multiple_items)
                     else:
+                        today_multiple_items.append(key)
                         waste_dict_custom["today"] = key
+
                 if value == self.date_tomorrow:
                     if "tomorrow" in waste_dict_custom.keys():
-                        waste_dict_custom["tomorrow"] = [waste_dict_custom["tomorrow"], key]
+                        tomorrow_multiple_items.append(key)
+                        waste_dict_custom["tomorrow"] = ', '.join(tomorrow_multiple_items)
                     else:
+                        tomorrow_multiple_items.append(key)
                         waste_dict_custom["tomorrow"] = key
+
                 if value == self.date_day_after_tomorrow:
                     if "day_after_tomorrow" in waste_dict_custom.keys():
-                        waste_dict_custom["day_after_tomorrow"] = [waste_dict_custom["day_after_tomorrow"], key]
+                        day_after_tomorrow_multiple_items.append(key)
+                        waste_dict_custom["day_after_tomorrow"] = ', '.join(day_after_tomorrow_multiple_items)
                     else:
+                        day_after_tomorrow_multiple_items.append(key)
                         waste_dict_custom["day_after_tomorrow"] = key
+
             if "today" not in waste_dict_custom.keys():
                 waste_dict_custom["today"] = self.label_none
             if "tomorrow" not in waste_dict_custom.keys():
@@ -185,9 +199,12 @@ class AfvaldienstScraper(object):
             for key,value in waste_dict_temp.items():
                 if value == waste_dict_custom["first_waste_date"]:
                     if "first_waste_type" in waste_dict_custom.keys():
-                        waste_dict_custom["first_waste_type"] = [waste_dict_custom["first_waste_type"], key]
+                        first_waste_type_multiple_items.append(key)
+                        waste_dict_custom["first_waste_type"] = ', '.join(first_waste_type_multiple_items)
                     else:
+                        first_waste_type_multiple_items.append(key)
                         waste_dict_custom["first_waste_type"] = key
+
             if "first_waste_date" not in waste_dict_custom.keys():
                 waste_dict_custom["first_waste_date"] = self.label_none
             if "first_waste_days_remaining" not in waste_dict_custom.keys():

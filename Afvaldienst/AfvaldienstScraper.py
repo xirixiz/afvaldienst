@@ -158,7 +158,7 @@ class AfvaldienstScraper(object):
             today_multiple_items = []
             tomorrow_multiple_items = []
             day_after_tomorrow_multiple_items = []
-            first_waste_type_multiple_items = []
+            first_next_item_multiple_items = []
 
             waste_dict_temp = {key:value for key,value in waste_dict.items() if len(value) != 0}
             for key,value in waste_dict_temp.items():
@@ -193,24 +193,24 @@ class AfvaldienstScraper(object):
             if "day_after_tomorrow" not in waste_dict_custom.keys():
                 waste_dict_custom["day_after_tomorrow"] = self.label_none
 
-            # waste_dict_custom["first_waste_type"] = min(waste_dict_temp, key=waste_dict_temp.get)
-            waste_dict_custom["first_waste_date"] = min(waste_dict_temp.values())
-            waste_dict_custom["first_waste_days_remaining"] = self.__calculate_days_between_dates(date_today, min(waste_dict_temp.values()))
+            # waste_dict_custom["first_next_item"] = min(waste_dict_temp, key=waste_dict_temp.get)
+            waste_dict_custom["first_next_date"] = min(waste_dict_temp.values())
+            waste_dict_custom["first_next_in_days"] = self.__calculate_days_between_dates(date_today, min(waste_dict_temp.values()))
             for key,value in waste_dict_temp.items():
-                if value == waste_dict_custom["first_waste_date"]:
-                    if "first_waste_type" in waste_dict_custom.keys():
-                        first_waste_type_multiple_items.append(key)
-                        waste_dict_custom["first_waste_type"] = ', '.join(first_waste_type_multiple_items)
+                if value == waste_dict_custom["first_next_date"]:
+                    if "first_next_item" in waste_dict_custom.keys():
+                        first_next_item_multiple_items.append(key)
+                        waste_dict_custom["first_next_item"] = ', '.join(first_next_item_multiple_items)
                     else:
-                        first_waste_type_multiple_items.append(key)
-                        waste_dict_custom["first_waste_type"] = key
+                        first_next_item_multiple_items.append(key)
+                        waste_dict_custom["first_next_item"] = key
 
-            if "first_waste_date" not in waste_dict_custom.keys():
-                waste_dict_custom["first_waste_date"] = self.label_none
-            if "first_waste_days_remaining" not in waste_dict_custom.keys():
-                waste_dict_custom["first_waste_days_remaining"] = self.label_none
-            if "first_waste_type" not in waste_dict_custom.keys():
-                waste_dict_custom["first_waste_type"] = self.label_none
+            if "first_next_date" not in waste_dict_custom.keys():
+                waste_dict_custom["first_next_date"] = self.label_none
+            if "first_next_in_days" not in waste_dict_custom.keys():
+                waste_dict_custom["first_next_in_days"] = self.label_none
+            if "first_next_item" not in waste_dict_custom.keys():
+                waste_dict_custom["first_next_item"] = self.label_none
 
             for key, value in waste_dict.items():
                 self.__gen_json(key, value)

@@ -34,8 +34,8 @@ class AfvaldienstScraper(object):
         if self.provider not in _providers:
             print("Invalid provider: {}, please verify".format(self.provider))
 
-        self.date_today = '2020-09-25'
-        #self.date_today = datetime.today().strftime('%Y-%m-%d')
+        #self.date_today = '2020-09-25'
+        self.date_today = datetime.today().strftime('%Y-%m-%d')
         today_to_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=1)
         self.date_tomorrow = datetime.strftime(today_to_tomorrow, '%Y-%m-%d')
         day_after_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=2)

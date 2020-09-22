@@ -2,16 +2,17 @@
 
 from AfvaldienstScraper import AfvaldienstScraper
 
-trash = AfvaldienstScraper('mijnafvalwijzer', '5146EG', '2', 'false', 'Geen')
-#trash = Afvaldienst('mijnafvalwijzer', '6851GJ', '2', '', 'false')
-#trash = Afvaldienst('mijnafvalwijzer', '3911CX', '178', '', 'false')
-#trash = Afvaldienst('mijnafvalwijzer', '1906KD', '17', '', 'false')
-#trash = Afvaldienst('mijnafvalwijzer', '3863AT', '27', '', 'false')
+#trash = AfvaldienstScraper('mijnafvalwijzer', '5146EG', '2', 'false', 'Geen')
+#trash = AfvaldienstScraper('mijnafvalwijzer', '6851GJ', '2', 'false', 'Geen')
+#trash = AfvaldienstScraper('mijnafvalwijzer', '3911CX', '178', 'false', 'Geen')
+#trash = AfvaldienstScraper('mijnafvalwijzer', '1906KD', '17', 'false', 'Geen')
+#trash = AfvaldienstScraper('mijnafvalwijzer', '3863AT', '27', 'false', 'Geen')
+trash = AfvaldienstScraper('mijnafvalwijzer', '5018EH', '1', 'false', 'Geen')
 
 #print(trash.trash_raw_json)
 #print("\n")
-#print(trash.trash_data)
-#print("\n")
+print(trash.trash_data)
+print("\n")
 print(trash.trash_schedule)
 print("\n")
 print(trash.trash_schedule_custom)

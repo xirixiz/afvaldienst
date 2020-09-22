@@ -34,13 +34,14 @@ class AfvaldienstScraper(object):
         if self.provider not in _providers:
             print("Invalid provider: {}, please verify".format(self.provider))
 
+
         self.date_today = datetime.today().strftime('%Y-%m-%d')
         today_to_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=1)
         self.date_tomorrow = datetime.strftime(today_to_tomorrow, '%Y-%m-%d')
         day_after_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=2)
         self.date_day_after_tomorrow = datetime.strftime(day_after_tomorrow, '%Y-%m-%d')
 
-        self._trash_data = self.__get_data()
+        self._trash_data, self._trash_data_custom = self.__get_data()
         self._trash_types = self.__get_trash_types()
         self._trash_schedule, self._trash_schedule_custom = self.__get_trash_schedule()
         self._trash_types_from_schedule = self.__get_trash_types_from_schedule()
@@ -120,9 +121,11 @@ class AfvaldienstScraper(object):
 
             # Place all possible values in the dictionary even if they are not necessary
             waste_dict = {}
+            waste_dict_custom = {}
             waste_list = []
+            waste_list_custom = []
 
-            # find gft. In some locations it's 'gft' and in other locations it's 'restgft'
+            # find gft.
             waste_dict["gft"] = self.get_date_from_afvaltype(jaaroverzicht, "gft", "gft")
             if len(waste_dict["gft"]) == 0:
                 waste_dict["gft"] = self.get_date_from_afvaltype(jaaroverzicht, "restgft", "gft")
@@ -130,7 +133,7 @@ class AfvaldienstScraper(object):
             waste_dict["papier"] = self.get_date_from_afvaltype(jaaroverzicht, "papier", "papier")
             if len(waste_dict["papier"]) == 0:
                 waste_dict["papier"] = self.get_date_from_afvaltype(jaaroverzicht, "dhm", "papier")
-            # find pmd. In some locations it's 'pd' and in other locations it's 'pmb' or 'plastic'
+            # find pmd.
             waste_dict["pmd"] = self.get_date_from_afvaltype(jaaroverzicht, "pd", "pmd")
             if len(waste_dict["pmd"]) == 0:
                 waste_dict["pmd"] = self.get_date_from_afvaltype(jaaroverzicht, "pmd", "pmd")
@@ -142,20 +145,65 @@ class AfvaldienstScraper(object):
                 waste_dict["pmd"] = self.get_date_from_afvaltype(jaaroverzicht, "dhm", "pmd")
             if len(waste_dict["pmd"]) == 0:
                 waste_dict["pmd"] = self.get_date_from_afvaltype(jaaroverzicht, "gkbp", "pmd")
-            # find restafval. In some locations it's 'restafval' and in other locations it's 'restgft'
+            # find restafval.
             waste_dict["restafval"] = self.get_date_from_afvaltype(jaaroverzicht, "restafval", "restafval")
             if len(waste_dict["restafval"]) == 0:
                 waste_dict["restafval"] = self.get_date_from_afvaltype(jaaroverzicht, "restgft", "restafval")
-            # find textiel
-            waste_dict["textiel"] = self.get_date_from_afvaltype(jaaroverzicht, "textiel", "textiel")
+            # find luiers
+            waste_dict["luiers"] = self.get_date_from_afvaltype(jaaroverzicht, "luiers", "luiers")
             # find kerstboom
             waste_dict["kerstbomen"] = self.get_date_from_afvaltype(jaaroverzicht, "kerstboom", "kerstbomen")
+
+            # append custom sensors
+            waste_dict_temp = {key:value for key,value in waste_dict.items() if len(value) != 0}
+            for key,value in waste_dict_temp.items():
+                if value == self.date_today:
+                    if "today" in waste_dict_custom.keys():
+                        waste_dict_custom["today"] = [waste_dict_custom["today"], key]
+                    else:
+                        waste_dict_custom["today"] = key
+                if value == self.date_tomorrow:
+                    if "tomorrow" in waste_dict_custom.keys():
+                        waste_dict_custom["tomorrow"] = [waste_dict_custom["tomorrow"], key]
+                    else:
+                        waste_dict_custom["tomorrow"] = key
+                if value == self.date_day_after_tomorrow:
+                    if "day_after_tomorrow" in waste_dict_custom.keys():
+                        waste_dict_custom["day_after_tomorrow"] = [waste_dict_custom["day_after_tomorrow"], key]
+                    else:
+                        waste_dict_custom["day_after_tomorrow"] = key
+            if "today" not in waste_dict_custom.keys():
+                waste_dict_custom["today"] = self.label_none
+            if "tomorrow" not in waste_dict_custom.keys():
+                waste_dict_custom["tomorrow"] = self.label_none
+            if "day_after_tomorrow" not in waste_dict_custom.keys():
+                waste_dict_custom["day_after_tomorrow"] = self.label_none
+
+            # waste_dict_custom["first_waste_type"] = min(waste_dict_temp, key=waste_dict_temp.get)
+            waste_dict_custom["first_waste_date"] = min(waste_dict_temp.values())
+            waste_dict_custom["first_waste_days_remaining"] = self.__calculate_days_between_dates(date_today, min(waste_dict_temp.values()))
+            for key,value in waste_dict_temp.items():
+                if value == waste_dict_custom["first_waste_date"]:
+                    if "first_waste_type" in waste_dict_custom.keys():
+                        waste_dict_custom["first_waste_type"] = [waste_dict_custom["first_waste_type"], key]
+                    else:
+                        waste_dict_custom["first_waste_type"] = key
+            if "first_waste_date" not in waste_dict_custom.keys():
+                waste_dict_custom["first_waste_date"] = self.label_none
+            if "first_waste_days_remaining" not in waste_dict_custom.keys():
+                waste_dict_custom["first_waste_days_remaining"] = self.label_none
+            if "first_waste_type" not in waste_dict_custom.keys():
+                waste_dict_custom["first_waste_type"] = self.label_none
 
             for key, value in waste_dict.items():
                 self.__gen_json(key, value)
                 waste_list.append(gen_json)
 
-            return waste_list
+            for key, value in waste_dict_custom.items():
+                self.__gen_json(key, value)
+                waste_list_custom.append(gen_json)
+
+            return waste_list, waste_list_custom
         except urllib.error.URLError as exc:
             print("Error occurred while fetching data: %r", exc.reason)
             return False
@@ -198,11 +246,6 @@ class AfvaldienstScraper(object):
     def __get_trash_schedule(self):
         trash_schedule = list()
         trash_schedule_custom = list()
-        temp_dict = dict()
-        temp_list_today = list()
-        temp_list_tomorrow = list()
-        temp_list_day_after_tomorrow = list()
-        temp_list_first_next_item = list()
 
         # Start counting wihth Today's date or with Tomorrow's date
         if self.start_date.casefold() in ('true', 'yes'):
@@ -210,6 +253,7 @@ class AfvaldienstScraper(object):
         else:
             start_date = self.date_tomorrow
 
+        # Append trash types from the provider with a valid date
         for json in self._trash_data:
             trash_name = json['key'].strip()
             trash_date = json['value']
@@ -222,74 +266,15 @@ class AfvaldienstScraper(object):
                         self.__gen_json(trash_name, trash_date_custom_format, days_remaining=(self.__calculate_days_between_dates(self.date_today, trash_date)))
                         trash_schedule.append(gen_json)
 
-                # Append key with value none if key not found
-                if not any(x['key'] == 'today' for x in trash_schedule_custom):
-                    self.__gen_json('today', self.label_none)
-                    trash_schedule_custom.append(gen_json)
-                if not any(x['key'] == 'tomorrow' for x in trash_schedule_custom):
-                    self.__gen_json('tomorrow', self.label_none)
-                    trash_schedule_custom.append(gen_json)
-                if not any(x['key'] == 'day_after_tomorrow' for x in trash_schedule_custom):
-                    self.__gen_json('day_after_tomorrow', self.label_none)
-                    trash_schedule_custom.append(gen_json)
+        # Append custom trash sensors
+        for json in self._trash_data_custom:
+            key = json['key'].strip()
+            value = json['value']
+            if not any(x['key'] == key for x in trash_schedule_custom):
+                self.__gen_json(key, value)
+                trash_schedule_custom.append(gen_json)
 
-                # Append today's (multiple) trash items
-                if trash_date == self.date_today:
-                    if any(x['key'] == 'today' for x in trash_schedule_custom):
-                        temp_list_today.append(trash_name)
-                        for dictionary in trash_schedule_custom:
-                            if dictionary['key'] == 'today':
-                                dictionary['value'] = ', '.join(temp_list_today)
-                    else:
-                        self.__gen_json('today', trash_name)
-                        trash_schedule_custom.append(gen_json)
-
-                # Append tomorrow's (multiple) trash items
-                if trash_date == self.date_tomorrow:
-                    if any(x['key'] == 'tomorrow' for x in trash_schedule_custom):
-                        temp_list_tomorrow.append(trash_name)
-                        for dictionary in trash_schedule_custom:
-                            if dictionary['key'] == 'tomorrow':
-                                dictionary['value'] = ', '.join(temp_list_tomorrow)
-                    else:
-                        self.__gen_json('tomorrow', trash_name)
-                        trash_schedule_custom.append(gen_json)
-
-                # # Append day_after_tomorrow's (multiple) trash items
-                if trash_date == self.date_day_after_tomorrow:
-                    if any(x['key'] == 'day_after_tomorrow' for x in trash_schedule_custom):
-                        temp_list_day_after_tomorrow.append(trash_name)
-                        for dictionary in trash_schedule_custom:
-                            if dictionary['key'] == 'day_after_tomorrow':
-                                dictionary['value'] = ', '.join(temp_list_day_after_tomorrow)
-                    else:
-                        self.__gen_json('day_after_tomorrow', trash_name)
-                        trash_schedule_custom.append(gen_json)
-
-                if trash_date >= start_date:
-                    # Append days until next pickup
-                    if not any(x['key'] == 'first_next_in_days' for x in trash_schedule_custom):
-                        self.__gen_json("first_next_in_days", (self.__calculate_days_between_dates(self.date_today, trash_date)))
-                        trash_schedule_custom.append(gen_json)
-
-                    # Append the first upcoming (multiple) trash name(s) to be picked up
-                    if not any(x['key'] == 'first_next_item' for x in trash_schedule_custom):
-                        self.__gen_json("first_next_item", trash_name)
-                        trash_schedule_custom.append(gen_json)
-                        dateCheck = trash_date
-                    if any(x['key'] == 'first_next_item' for x in trash_schedule_custom):
-                        if trash_date == dateCheck:
-                            temp_list_first_next_item.append(trash_name)
-                            for dictionary in trash_schedule_custom:
-                                if dictionary['key'] == 'first_next_item':
-                                    dictionary['value'] = ', '.join(temp_list_first_next_item)
-
-                    # Append first upcoming date for next pickup
-                    if not any(x['key'] == 'first_next_date' for x in trash_schedule_custom):
-                        self.__gen_json("first_next_date", trash_date_custom_format)
-                        trash_schedule_custom.append(gen_json)
-
-        # Append all trash types from the current year
+        # Append all trash types from the from the provider from the current year if not in the list
         for trash_name in self._trash_types:
             if not any(x['key'] == trash_name for x in trash_schedule):
                 self.__gen_json(trash_name, self.label_none, days_remaining=self.label_none)
@@ -300,7 +285,7 @@ class AfvaldienstScraper(object):
     @property
     def trash_data(self):
         """Return both the pickup date and the container type."""
-        return self._trash_data
+        return self._trash_data, self._trash_data_custom
 
     @property
     def trash_schedule(self):

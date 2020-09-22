@@ -194,10 +194,11 @@ class AfvaldienstScraper(object):
                 waste_dict_custom["day_after_tomorrow"] = self.label_none
 
             # waste_dict_custom["first_next_item"] = min(waste_dict_temp, key=waste_dict_temp.get)
-            waste_dict_custom["first_next_date"] = min(waste_dict_temp.values())
+            first_date = min(waste_dict_temp.values())
+            waste_dict_custom["first_next_date"] = datetime.strptime(min(waste_dict_temp.values()), '%Y-%m-%d').strftime('%d-%m-%Y')
             waste_dict_custom["first_next_in_days"] = self.__calculate_days_between_dates(date_today, min(waste_dict_temp.values()))
             for key,value in waste_dict_temp.items():
-                if value == waste_dict_custom["first_next_date"]:
+                if value == first_date:
                     if "first_next_item" in waste_dict_custom.keys():
                         first_next_item_multiple_items.append(key)
                         waste_dict_custom["first_next_item"] = ', '.join(first_next_item_multiple_items)

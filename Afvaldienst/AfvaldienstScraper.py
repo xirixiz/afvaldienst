@@ -34,12 +34,17 @@ class AfvaldienstScraper(object):
         if self.provider not in _providers:
             print("Invalid provider: {}, please verify".format(self.provider))
 
-        #self.date_today = '2020-09-25'
         self.date_today = datetime.today().strftime('%Y-%m-%d')
         today_to_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=1)
         self.date_tomorrow = datetime.strftime(today_to_tomorrow, '%Y-%m-%d')
         day_after_tomorrow = datetime.strptime(self.date_today, '%Y-%m-%d') + timedelta(days=2)
         self.date_day_after_tomorrow = datetime.strftime(day_after_tomorrow, '%Y-%m-%d')
+
+        # Start counting wihth Today's date or with Tomorrow's date
+        if self.start_date.casefold() in ('true', 'yes'):
+            self.date_selected = self.date_today
+        else:
+            self.date_selected = self.date_tomorrow
 
         self._trash_data, self._trash_data_custom = self.__get_data()
         self._trash_types = self.__get_trash_types()
@@ -117,8 +122,6 @@ class AfvaldienstScraper(object):
             soup = BeautifulSoup(html, "html.parser")
             jaaroverzicht = soup.find(id="jaaroverzicht")
 
-            date_today = datetime.today().strftime('%Y-%m-%d')
-
             # Place all possible values in the dictionary even if they are not necessary
             waste_dict = {}
             waste_list = []
@@ -161,6 +164,7 @@ class AfvaldienstScraper(object):
             first_next_item_multiple_items = []
 
             waste_dict_temp = {key:value for key,value in waste_dict.items() if len(value) != 0}
+
             for key,value in waste_dict_temp.items():
                 if value == self.date_today:
                     if "today" in waste_dict_custom.keys():
@@ -193,11 +197,12 @@ class AfvaldienstScraper(object):
             if "day_after_tomorrow" not in waste_dict_custom.keys():
                 waste_dict_custom["day_after_tomorrow"] = self.label_none
 
-            # waste_dict_custom["first_next_item"] = min(waste_dict_temp, key=waste_dict_temp.get)
-            first_date = min(waste_dict_temp.values())
-            waste_dict_custom["first_next_date"] = datetime.strptime(min(waste_dict_temp.values()), '%Y-%m-%d').strftime('%d-%m-%Y')
-            waste_dict_custom["first_next_in_days"] = self.__calculate_days_between_dates(date_today, min(waste_dict_temp.values()))
-            for key,value in waste_dict_temp.items():
+            waste_dict_temp_date_selected = {key:value for key,value in waste_dict.items() if len(value) != 0 and value >= self.date_selected}
+
+            first_date = min(waste_dict_temp_date_selected.values())
+            waste_dict_custom["first_next_date"] = datetime.strptime(min(waste_dict_temp_date_selected.values()), '%Y-%m-%d').strftime('%d-%m-%Y')
+            waste_dict_custom["first_next_in_days"] = self.__calculate_days_between_dates(self.date_today, min(waste_dict_temp_date_selected.values()))
+            for key,value in waste_dict_temp_date_selected.items():
                 if value == first_date:
                     if "first_next_item" in waste_dict_custom.keys():
                         first_next_item_multiple_items.append(key)
@@ -246,9 +251,9 @@ class AfvaldienstScraper(object):
 
     # Function: calculate amount of days between two dates
     def __calculate_days_between_dates(self, start, end):
-        start_date = datetime.strptime(start, "%Y-%m-%d")
-        end_date = datetime.strptime(end, "%Y-%m-%d")
-        return (abs((end_date-start_date).days))
+        start = datetime.strptime(start, "%Y-%m-%d")
+        end = datetime.strptime(end, "%Y-%m-%d")
+        return (abs((end-start).days))
 
     # Function: json/dict generator
     def __gen_json(self, key, value, **kwargs):
@@ -264,12 +269,6 @@ class AfvaldienstScraper(object):
     def __get_trash_schedule(self):
         trash_schedule = list()
         trash_schedule_custom = list()
-
-        # Start counting wihth Today's date or with Tomorrow's date
-        if self.start_date.casefold() in ('true', 'yes'):
-            start_date = self.date_today
-        else:
-            start_date = self.date_tomorrow
 
         # Append trash types from the provider with a valid date
         for json in self._trash_data:

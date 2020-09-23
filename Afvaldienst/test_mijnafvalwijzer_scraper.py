@@ -7,7 +7,8 @@ from AfvaldienstScraper import AfvaldienstScraper
 #trash = AfvaldienstScraper('mijnafvalwijzer', '3911CX', '178', 'false', 'Geen')
 #trash = AfvaldienstScraper('mijnafvalwijzer', '1906KD', '17', 'false', 'Geen')
 #trash = AfvaldienstScraper('mijnafvalwijzer', '3863AT', '27', 'false', 'Geen')
-trash = AfvaldienstScraper('mijnafvalwijzer', '5018EH', '1', 'false', 'Geen')
+#trash = AfvaldienstScraper('mijnafvalwijzer', '5018EH', '1', '', 'false', 'Geen')
+trash = AfvaldienstScraper('mijnafvalwijzer', '5473VD', '7', 'A', 'false', 'Geen')
 
 #print(trash.trash_raw_json)
 #print("\n")

@@ -17,9 +17,10 @@ import urllib.request
 import urllib.error
 
 class AfvaldienstScraper(object):
-    def __init__(self, provider, zipcode, housenumber, start_date, label):
+    def __init__(self, provider, zipcode, housenumber, suffix, start_date, label):
         self.provider = provider
         self.housenumber = housenumber
+        self.suffix = suffix
         self.start_date = start_date
         self.label_none = label
 
@@ -114,7 +115,7 @@ class AfvaldienstScraper(object):
 
     def __get_data(self):
         try:
-            url = 'https://www.{0}.nl/nl/{1}/{2}/'.format(self.provider, self.zipcode, int(self.housenumber))
+            url = 'https://www.{0}.nl/nl/{1}/{2}/{3}/'.format(self.provider, self.zipcode, int(self.housenumber), self.suffix)
             req = urllib.request.Request(url=url)
             f = urllib.request.urlopen(req)
             html = f.read().decode("utf-8")
@@ -156,6 +157,7 @@ class AfvaldienstScraper(object):
             waste_dict["kerstbomen"] = self.get_date_from_afvaltype(jaaroverzicht, "kerstboom", "kerstbomen")
 
             # append custom sensors
+            #waste_dict = {'gft': '2020-09-25', 'papier': '2020-09-25', 'pmd': '2020-09-25', 'restafval': '2020-10-02', 'luiers': '2020-09-25', 'kerstbomen': '2020-09-26'}
             waste_dict_custom = {}
             waste_list_custom = []
             today_multiple_items = []
